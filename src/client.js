@@ -32,7 +32,7 @@ ChatClient.prototype.on = function (event, callback) {
   return this;
 }
 
-var ChatClient = function ({host, port}) {
+export function ChatClient ({host, port}) {
 
   this.host = host
   this.port = port
