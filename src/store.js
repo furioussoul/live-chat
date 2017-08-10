@@ -50,7 +50,7 @@ const store = new Vuex.Store({
     filterKey: ''
   },
   mutations: {
-    INIT_DATA (state) {
+    GET_USER_LIST (state) {
       state.client = new ChatClient('127.0.0.1', 8080)
       if (!state.client.connect()) {
         alert('连接失败')
@@ -72,6 +72,19 @@ const store = new Vuex.Store({
     SET_FILTER_KEY (state, value) {
       state.filterKey = value;
     }
+  },
+  actions : {
+    getUserList: function(state) {
+      state.client = new ChatClient({host:'127.0.0.1', port:8080})
+      if (!state.client.connect()) {
+        alert('连接失败')
+      }
+      //获取用户列表
+      state.client.getUserList()
+    } ,
+    sendMessage: ({dispatch}, content) => dispatch('SEND_MESSAGE', content),
+    selectSession: ({dispatch}, id) => dispatch('SELECT_SESSION', id),
+    search: ({dispatch}, value) => dispatch('SET_FILTER_KEY', value)
   }
 });
 
@@ -84,12 +97,6 @@ store.watch(
   {
     deep: true
   }
-);
+)
 
-export default store;
-export const actions = {
-  initData: ({dispatch}) => dispatch('INIT_DATA'),
-  sendMessage: ({dispatch}, content) => dispatch('SEND_MESSAGE', content),
-  selectSession: ({dispatch}, id) => dispatch('SELECT_SESSION', id),
-  search: ({dispatch}, value) => dispatch('SET_FILTER_KEY', value)
-};
+export default store
