@@ -1,12 +1,12 @@
 <script>
   import Card from './components/card';
   import List from './components/list';
-  import Text from './components/text';
+  import TextBox from './components/textBox';
   import Message from './components/message';
 
   export default {
-    components: {Card, List, Text, Message},
-    created () {
+    components: {Card, List, TextBox, Message},
+    mounted () {
       this.$store.dispatch('login')
     }
   }
@@ -20,7 +20,7 @@
     </div>
     <div class="main">
       <message></message>
-      <text></text>
+      <TextBox></TextBox>
     </div>
   </div>
 </template>

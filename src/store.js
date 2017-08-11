@@ -8,93 +8,16 @@ import {ChatClient} from './client'
 
 Vue.use(Vuex);
 
-const now = new Date();
 const store = new Vuex.Store({
   state: {
     client: null,
     // 当前用户
-    user: {
-      name: 'coffce',
-      img: '/static/images/1.jpg'
-    },
+    user: {},
     // 会话列表
-    sessions: [
-      {
-        id: 1,
-        user: {
-          name: '示例介绍',
-          img: '/static/images/2.png'
-        },
-        messages: [
-          {
-            content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
-            date: now
-          }, {
-            content: '项目地址: https://github.com/coffcer/vue-chat',
-            date: now
-          },
-          {
-            content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
-            date: now
-          }, {
-            content: '项目地址: https://github.com/coffcer/vue-chat',
-            date: now
-          },
-          {
-            content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
-            date: now
-          }, {
-            content: '项目地址: https://github.com/coffcer/vue-chat',
-            date: now
-          },
-          {
-            content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
-            date: now
-          }, {
-            content: '项目地址: https://github.com/coffcer/vue-chat',
-            date: now
-          }
-        ]
-      },
-      {
-        id: 2,
-        user: {
-          name: 'webpack',
-          img: '/static/images/3.jpg'
-        },
-        messages: [   {
-          content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
-          date: now
-        }, {
-          content: '项目地址: https://github.com/coffcer/vue-chat',
-          date: now
-        },
-          {
-            content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
-            date: now
-          }, {
-            content: '项目地址: https://github.com/coffcer/vue-chat',
-            date: now
-          },
-          {
-            content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
-            date: now
-          }, {
-            content: '项目地址: https://github.com/coffcer/vue-chat',
-            date: now
-          },
-          {
-            content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
-            date: now
-          }, {
-            content: '项目地址: https://github.com/coffcer/vue-chat',
-            date: now
-          }]
-      }
-    ],
+    sessions: [],
     // 当前选中的会话
     currentSessionId: 1,
-    currentSession: null,
+    currentSession: {},//todo 合并
     // 过滤出只包含这个key的会话
     filterKey: ''
   },
@@ -111,16 +34,15 @@ const store = new Vuex.Store({
     setFilterKey: (state, value) => state.filterKey = value
   },
   actions: {
-    login({client}) {
-      client = new ChatClient({host: '127.0.0.1', port: 8080})
-      if (!client.connect()) {
+    login({state}) {
+      state.client = new ChatClient({host: '127.0.0.1', port: 8080})
+      if (!state.client.connect()) {
         alert('连接失败')
       }
-      //获取用户列表
-      client.login()
+      state.client.login(state.currentSessionId)
     },
-    sendMsg ({currentSessionId}, content) {
-      this.state.client.sendMsg({currentSessionId, content})
+    sendMsg ({state}, content) {
+      state.client.sendMsg({'sendToSessionId': state.currentSessionId, content})
     }
   }
 });

@@ -1,16 +1,17 @@
+import store from './store'
 //注册事件
 function registerEvent() {
-  this.socket.on("login", function (data) {//登陆返回
-    if (data.ret === 1) {
-      $('#cover').remove()
-      identity.nickname = data.info.nickname
-    } else {
-      alert("登陆失败");
-    }
-  }).on('sendMsg', function (res) {
-    console.log(res)
-  }).on('login', function (res) {
-    console.log(res)
+  this.socket.on("login", function ({user, sessions}) {
+    store.state.user = user
+    store.state.sessions = sessions
+  })
+  this.socket.on('sendMsg', function (res) {
+    store.state.sessions.forEach(function (session) {
+      session .messages.push({
+        content:res.content,
+        date:new Date()
+    })
+    })
   })
 }
 
@@ -39,11 +40,11 @@ export function ChatClient ({host, port}) {
   this.socket = null
   this.events = []
 
-  this.login = function () {
-    this.socket.emit("login");
+  this.login = function (sessionId) {
+    this.socket.emit("login",sessionId);
   }
 
-  this.sendMsg = function (obj) {
-    this.socket.emit('chat message', obj);
+  this.sendMsg = function (data) {
+    this.socket.emit('sendMsg', data);
   }
 }

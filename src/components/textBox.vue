@@ -1,11 +1,14 @@
 <script>
-  import {mapMutations} from 'vuex';
-
   export default {
+    data(){
+      return {
+        content: ''
+      }
+    },
     methods: {
       onKeyup (e) {
-        if (e.ctrlKey && e.keyCode === 13 && this.content.length) {
-          this.sendMessage(this.content);
+        if (e.keyCode === 13 && this.content.length) {
+          this.$store.dispatch('sendMsg', this.content);
           this.content = '';
         }
       }
@@ -15,7 +18,7 @@
 
 <template>
   <div class="text">
-    <textarea placeholder="按 Ctrl + Enter 发送" v-model="content" @keyup="onKeyup"></textarea>
+    <textarea placeholder="按 Enter 发送" v-model="content" @keyup="onKeyup"></textarea>
   </div>
 </template>
 
