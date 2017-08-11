@@ -9,7 +9,7 @@ function registerEvent() {
     }
   }).on('sendMsg', function (res) {
     console.log(res)
-  }).on('getUserList', function (res) {
+  }).on('login', function (res) {
     console.log(res)
   })
 }
@@ -39,8 +39,8 @@ export function ChatClient ({host, port}) {
   this.socket = null
   this.events = []
 
-  this.getUserList = function () {
-    this.socket.emit("getUserList");
+  this.login = function () {
+    this.socket.emit("login");
   }
 
   this.sendMsg = function (obj) {

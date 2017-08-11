@@ -1,15 +1,15 @@
 <script>
   import {mapGetters} from "vuex";
-  import {mapActions} from "vuex";
+  import {mapMutations} from "vuex";
   export default {
     computed: {
       ...mapGetters([
         'sessions',
-        'currentId'
+        'currentSessionId'
       ])
     },
     methods: {
-      ...mapActions([
+      ...mapMutations([
           'selectSession'
       ])
     }
@@ -19,7 +19,7 @@
 <template>
   <div class="list">
     <ul>
-      <li v-for="item in sessions" :class="{ active: item.id === currentId }" @click="selectSession(item.id)">
+      <li v-for="item in sessions" :class="{ active: item.id === currentSessionId }" @click="selectSession(item.id)">
         <img class="avatar" width="30" height="30" :alt="item.user.name" :src="item.user.img">
         <p class="name">{{item.user.name}}</p>
       </li>

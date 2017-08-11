@@ -1,5 +1,5 @@
 <script>
-  import {mapGetters} from "vuex";
+  import {mapGetters, mapMutations} from "vuex";
   export default {
     computed: {
       ...mapGetters([
@@ -7,8 +7,9 @@
       ])
     },
     methods: {
+      ...mapMutations(['setFilterKey']),
       onKeyup (e) {
-        this.$store.commit('SET_FILTER_KEY',e.target.value);
+        this.setFilterKey(e.target.value);
       }
     }
   };

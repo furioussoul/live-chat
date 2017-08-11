@@ -1,16 +1,8 @@
 <script>
-import { actions } from '../store';
+import { mapMutations } from 'vuex';
 
 export default {
-    vuex: {
-        actions: actions
-    },
-    data () {
-        return {
-            content: ''
-        };
-    },
-    methods: {
+        methods: {
         onKeyup (e) {
             if (e.ctrlKey && e.keyCode === 13 && this.content.length) {
                 this.sendMessage(this.content);

@@ -11,11 +11,9 @@ io.on('connection', function(socket){
     socket.on('disconnect', function(){
         console.log('user disconnected');
     });
-    socket.on("login", OnLogin);
-    socket.on('getUserList', function(obj){
-        io.emit('getUserList', "userList");
+    socket.on('login', function(obj){
+        io.emit('login', "login");
     });
-    socket.on("login", OnLogin);
 });
 
 var config = {

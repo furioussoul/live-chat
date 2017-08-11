@@ -7,7 +7,7 @@
   export default {
     components: {Card, List, Text, Message},
     created () {
-      this.$store.dispatch('getUserList')
+      this.$store.dispatch('login')
     }
   }
 </script>
