@@ -23,7 +23,7 @@ const store = new Vuex.Store({
         id: 1,
         user: {
           name: '示例介绍',
-          img: 'dist/images/2.png'
+          img: './dist/images/2.png'
         },
         messages: [
           {
@@ -39,7 +39,7 @@ const store = new Vuex.Store({
         id: 2,
         user: {
           name: 'webpack',
-          img: 'dist/images/3.jpg'
+          img: './dist/images/3.jpg'
         },
         messages: []
       }
@@ -48,6 +48,11 @@ const store = new Vuex.Store({
     currentSessionId: 1,
     // 过滤出只包含这个key的会话
     filterKey: ''
+  },
+  getters:{
+    user : (state, getters)=> state.user,
+    sessions: ({sessions, filterKey}) => sessions.filter(session => session.user.name.includes(filterKey)),
+    currentId: ({currentSessionId}) => currentSessionId
   },
   mutations: {
     GET_USER_LIST (state) {
