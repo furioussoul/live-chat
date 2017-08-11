@@ -32,6 +32,27 @@ const store = new Vuex.Store({
           }, {
             content: '项目地址: https://github.com/coffcer/vue-chat',
             date: now
+          },
+          {
+            content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
+            date: now
+          }, {
+            content: '项目地址: https://github.com/coffcer/vue-chat',
+            date: now
+          },
+          {
+            content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
+            date: now
+          }, {
+            content: '项目地址: https://github.com/coffcer/vue-chat',
+            date: now
+          },
+          {
+            content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
+            date: now
+          }, {
+            content: '项目地址: https://github.com/coffcer/vue-chat',
+            date: now
           }
         ]
       },
@@ -41,17 +62,46 @@ const store = new Vuex.Store({
           name: 'webpack',
           img: '/static/images/3.jpg'
         },
-        messages: []
+        messages: [   {
+          content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
+          date: now
+        }, {
+          content: '项目地址: https://github.com/coffcer/vue-chat',
+          date: now
+        },
+          {
+            content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
+            date: now
+          }, {
+            content: '项目地址: https://github.com/coffcer/vue-chat',
+            date: now
+          },
+          {
+            content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
+            date: now
+          }, {
+            content: '项目地址: https://github.com/coffcer/vue-chat',
+            date: now
+          },
+          {
+            content: 'Hello，这是一个基于Vue + Vuex + Webpack构建的简单chat示例，聊天记录保存在localStorge, 有什么问题可以通过Github Issue问我。',
+            date: now
+          }, {
+            content: '项目地址: https://github.com/coffcer/vue-chat',
+            date: now
+          }]
       }
     ],
     // 当前选中的会话
     currentSessionId: 1,
+    currentSession: null,
     // 过滤出只包含这个key的会话
     filterKey: ''
   },
   getters: {
     user: (state) => state.user,
     currentSessionId: ({currentSessionId}) => currentSessionId,
+    currentSession: ({sessions, currentSessionId}) => sessions.find(session => session.id === currentSessionId),
     sessions: ({sessions, filterKey}) => sessions.filter(session => session.user.name.toUpperCase().includes(filterKey.toUpperCase()))
   },
   mutations: {
