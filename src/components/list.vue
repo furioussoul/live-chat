@@ -5,12 +5,12 @@
     computed: {
       ...mapGetters([
         'sessions',
-        'currentSessionId'
+        'currentToSession'
       ])
     },
     methods: {
       ...mapMutations([
-          'selectSession'
+          'changeCurrentToSession'
       ])
     }
   };
@@ -19,7 +19,7 @@
 <template>
   <div class="list">
     <ul>
-      <li v-for="item in sessions" :class="{ active: item.id === currentSessionId }" @click="selectSession(item.id)">
+      <li v-for="item in sessions" :class="{ active: item.id === currentToSession.id }" @click="changeCurrentToSession(item.id)">
         <img class="avatar" width="30" height="30" :alt="item.user.name" :src="item.user.img">
         <p class="name">{{item.user.name}}</p>
       </li>

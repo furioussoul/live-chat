@@ -22,13 +22,12 @@ function checkAlive(toName){
 }
 
 io.on('connection', function (socket) {
-  console.log(socket.id)
 
   socket.on('login', function (param) {
-    console.log(param)
     loginNameMapSocket[param.loginName] = socket
     socket.emit('login', {
       user: {
+        id: 0,
         name: 'coffce',
         img: '/static/images/1.jpg'
       },
@@ -36,7 +35,7 @@ io.on('connection', function (socket) {
         {
           id: 1,
           user: {
-            name: '示例介绍',
+            name: 'vue',
             img: '/static/images/2.png'
           },
           messages: [
@@ -63,19 +62,19 @@ io.on('connection', function (socket) {
     })
   })
   socket.on('sendMsg', function (param) {
-    if(!checkAlive(param.to)) {
-      var fromSocket = loginNameMapSocket[param.from];
-      fromSocket.emit('sendMsg', '用户不在线');
-      return;
+    var fromSocket = loginNameMapSocket[param.from]
+    var toSocket = loginNameMapSocket[param.to]
+    if(fromSocket) {
+      fromSocket.emit('sendMsg', param)
     }
-
-    var toSocket = loginNameMapSocket[param.to];
     if(toSocket) {
       toSocket.emit('sendMsg', param)
     }
+    console.log('from '+ param.from + ',to ' + param.to + ' content:' + param.content)
+
     //数据库里存一下 todo
   })
-  socket.on('disconnect', () => console.log('disconnected'))
+  socket.on('disconnect', () => console.log('disconnected'))//如果要记录谁断开链接，可以把账号和socketId映射
 })
 
 

@@ -2,7 +2,7 @@ import store from './store'
 
 //注册事件
 function registerEvent() {
-  this.socket.on("initData", function ({user, sessions}) {
+  this.socket.on("login", function ({user, sessions}) {
     store.state.user = user
     store.state.sessions = sessions
   })

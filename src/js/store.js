@@ -10,26 +10,20 @@ Vue.use(Vuex);
 
 const store = new Vuex.Store({
   state: {
-    client: null,
-    // 当前用户
-    user: {},
-    // 会话列表
-    sessions: [],
-    // 当前选中的会话
-    currentSessionId: 1,
-    currentSession: {},//todo 合并
-    // 过滤出只包含这个key的会话
-    filterKey: ''
+    client: null,//socket client
+    user: {}, // 当前用户
+    sessions: [],// 会话列表
+    currentToSession: {}, // 当前选中的对方的会话
+    filterKey: '' //过滤会话列表
   },
   getters: {
     user: (state) => state.user,
-    currentSessionId: ({currentSessionId}) => currentSessionId,
-    currentSession: ({sessions, currentSessionId}) => sessions.find(session => session.id === currentSessionId),
+    currentToSession: (state) => state.currentToSession,
     sessions: ({sessions, filterKey}) => sessions.filter(session => session.user.name.toUpperCase().includes(filterKey.toUpperCase()))
   },
   mutations: {
-    selectSession (state, currentSessionId) {
-      state.currentSessionId = currentSessionId
+    changeCurrentToSession (state, sessionId) {
+      state.currentToSession = state.sessions.find(session => session.id === sessionId)
     },
     setFilterKey: (state, value) => state.filterKey = value
   },
@@ -39,10 +33,16 @@ const store = new Vuex.Store({
       if (!state.client.connect()) {
         alert('连接失败')
       }
-      state.client.login({loginName:state.currentSessionId}) //todo 换成登录
+      state.client.login({loginName: 1}) //todo 换成登录
     },
     sendMsg ({state}, content) {
-      state.client.sendMsg({'to': state.currentSessionId, content})
+      state.client.sendMsg(
+        {
+          'from': state.user.id,
+          'to': state.currentToSession.id,
+          content
+        }
+      )
     }
   }
 });
