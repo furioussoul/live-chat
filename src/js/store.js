@@ -39,10 +39,10 @@ const store = new Vuex.Store({
       if (!state.client.connect()) {
         alert('连接失败')
       }
-      state.client.login(state.currentSessionId)
+      state.client.login({loginName:state.currentSessionId}) //todo 换成登录
     },
     sendMsg ({state}, content) {
-      state.client.sendMsg({'sendToSessionId': state.currentSessionId, content})
+      state.client.sendMsg({'to': state.currentSessionId, content})
     }
   }
 });

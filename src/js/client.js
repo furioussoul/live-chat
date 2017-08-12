@@ -2,14 +2,14 @@ import store from './store'
 
 //注册事件
 function registerEvent() {
-  this.socket.on("login", function ({user, sessions}) {
+  this.socket.on("initData", function ({user, sessions}) {
     store.state.user = user
     store.state.sessions = sessions
   })
-  this.socket.on('sendMsg', function (res) {
+  this.socket.on('sendMsg', function (param) {
     store.state.sessions.forEach(function (session) {
-      session .messages.push({
-        content:res.content,
+      session.messages.push({
+        content:param.content,
         date:new Date()
     })
     })
@@ -41,11 +41,11 @@ export function ChatClient ({host, port}) {
   this.socket = null
   this.events = []
 
-  this.login = function (sessionId) {
-    this.socket.emit("login",sessionId);
+  this.login = function (param) {
+    this.socket.emit("login",param);
   }
 
-  this.sendMsg = function (data) {
-    this.socket.emit('sendMsg', data);
+  this.sendMsg = function (param) {
+    this.socket.emit('sendMsg', param);
   }
 }
