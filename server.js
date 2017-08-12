@@ -11,9 +11,19 @@ app.get('/', function (req, res) {
 });
 
 var dataSource = {}
-var loginNameMapSocket = {}
+var loginNameMapSocket = {} //上线注册列表
+var nameMapName = {} //服务端记录用户映射，可应对权群聊
+
+function checkAlive(toName){
+  if(loginNameMapSocket[toName]) {
+    return true;
+  }
+  return false;
+}
 
 io.on('connection', function (socket) {
+  console.log(socket.id)
+
   socket.on('login', function (param) {
     console.log(param)
     loginNameMapSocket[param.loginName] = socket
@@ -53,6 +63,12 @@ io.on('connection', function (socket) {
     })
   })
   socket.on('sendMsg', function (param) {
+    if(!checkAlive(param.to)) {
+      var fromSocket = loginNameMapSocket[param.from];
+      fromSocket.emit('sendMsg', '用户不在线');
+      return;
+    }
+
     var toSocket = loginNameMapSocket[param.to];
     if(toSocket) {
       toSocket.emit('sendMsg', param)
