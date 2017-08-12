@@ -25,7 +25,7 @@
 </script>
 
 <template>
-  <div class="message" v-scroll-bottom="currentSession.messages">
+  <div class="message" v-scroll-bottom>
     <ul v-if="currentSession">
       <li v-for="item in currentSession.messages">
         <p class="time">
