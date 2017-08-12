@@ -27,7 +27,7 @@ io.on('connection', function (socket) {
   socket.on('login', function (param) {
     console.log(param)
     loginNameMapSocket[param.loginName] = socket
-    socket.emit('initData', {
+    socket.emit('login', {
       user: {
         name: 'coffce',
         img: '/static/images/1.jpg'
