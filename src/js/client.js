@@ -7,12 +7,7 @@ function registerEvent() {
     store.state.sessions = sessions
   })
   this.socket.on('sendMsg', function (param) {
-    store.state.sessions.forEach(function (session) {
-      session.messages.push({
-        content:param.content,
-        date:new Date()
-    })
-    })
+    store.state.currentToSession.messages.push(param)
   })
 }
 

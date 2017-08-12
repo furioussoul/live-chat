@@ -62,12 +62,17 @@ io.on('connection', function (socket) {
     })
   })
   socket.on('sendMsg', function (param) {
-    var fromSocket = loginNameMapSocket[param.from]
-    var toSocket = loginNameMapSocket[param.to]
+    var now = new Date(),
+     fromSocket = loginNameMapSocket[param.from],
+     toSocket = loginNameMapSocket[param.to]
     if(fromSocket) {
+      param.self = false
+      param.date = now
       fromSocket.emit('sendMsg', param)
     }
     if(toSocket) {
+      param.self = true
+      param.date = now
       toSocket.emit('sendMsg', param)
     }
     console.log('from '+ param.from + ',to ' + param.to + ' content:' + param.content)

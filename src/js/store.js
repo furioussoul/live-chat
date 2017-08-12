@@ -11,12 +11,13 @@ Vue.use(Vuex);
 const store = new Vuex.Store({
   state: {
     client: null,//socket client
-    user: {}, // 当前用户
+    user: null, // 当前用户
     sessions: [],// 会话列表
     currentToSession: {}, // 当前选中的对方的会话
     filterKey: '' //过滤会话列表
   },
   getters: {
+    client: (state) => state.client,
     user: (state) => state.user,
     currentToSession: (state) => state.currentToSession,
     sessions: ({sessions, filterKey}) => sessions.filter(session => session.user.name.toUpperCase().includes(filterKey.toUpperCase()))
