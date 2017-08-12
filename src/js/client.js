@@ -1,4 +1,5 @@
-import store from './store'
+import store from '../store'
+
 //注册事件
 function registerEvent() {
   this.socket.on("login", function ({user, sessions}) {

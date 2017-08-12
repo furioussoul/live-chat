@@ -1,10 +1,14 @@
-var app = require('express')();
+var express = require('express');
+var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 const now = new Date();
 
+app.use('/static', express.static(__dirname + '/dist/static'))
+
 app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/index.html');
+  console.log(__dirname)
+  res.sendFile(__dirname + '/dist/index.html');
 });
 
 var dataSource = {}

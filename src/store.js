@@ -4,7 +4,7 @@
  */
 import Vue from 'vue';
 import Vuex from 'vuex';
-import {ChatClient} from './client'
+import {ChatClient} from './js/client'
 
 Vue.use(Vuex);
 
