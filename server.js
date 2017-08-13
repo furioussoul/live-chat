@@ -65,8 +65,8 @@ io.on('connection', function (socket) {
         },
         sessions: userInfo.sessions || []
       }))
-      redisClient.smembers('room',function (error, loginNames) {
-        if(error) throw error
+      redisClient.smembers('room', function (error, loginNames) {
+        if (error) throw error
         io.emit('getUserList', loginNames)
       })
     })
@@ -80,11 +80,11 @@ io.on('connection', function (socket) {
         return void socket.emit('login', response.fail('用户名密码错误'))
       }
 
-      redisClient.smembers('room',function (error, loginNames) {
-        if(error) throw error
-        if (-1 !== loginNames.indexOf(param.loginName)){
+      redisClient.smembers('room', function (error, loginNames) {
+        if (error) throw error
+        if (-1 !== loginNames.indexOf(param.loginName)) {
           return void socket.emit('login', response.fail('你的账号在别处被登录了'))//别处登录了
-        }else {
+        } else {
           redisClient.sadd('room', param.loginName)
           redisClient.hmset(param.loginName, 'createTime', new Date())//更新登录时间
           loginNameMapSocket[param.loginName] = socket
@@ -95,7 +95,9 @@ io.on('connection', function (socket) {
               name: userInfo.nickName || userInfo.loginName,
               img: userInfo.img || '/static/images/2.png'
             },
-            sessions: userInfo.sessions || []
+            sessions: userInfo.sessions
+              ? JSON.parse(userInfo.sessions)
+              : []
           }))
           loginNames.push(param.loginName)
           io.emit('getUserList', loginNames)
@@ -116,8 +118,8 @@ io.on('connection', function (socket) {
   })
 
   socket.on('getUserList', function (loginName) {
-    redisClient.smembers('room',function (error, loginNames) {
-      if(error) throw error
+    redisClient.smembers('room', function (error, loginNames) {
+      if (error) throw error
       var socket = loginNameMapSocket[loginName]
       socket.emit('getUserList', loginNames)
     })
@@ -125,16 +127,16 @@ io.on('connection', function (socket) {
 
   socket.on('disconnect', function () {
     var disconnected = false
-    for (var loginName in loginNameMapSocket){
-      if(loginNameMapSocket[loginName].id === socket.id){
+    for (var loginName in loginNameMapSocket) {
+      if (loginNameMapSocket[loginName].id === socket.id) {
         delete loginNameMapSocket[loginName]
-        disconnected =true
+        disconnected = true
         redisClient.srem('room', loginName)
         io.emit('disconnect', loginName)
         console.log(loginName + " disconnected")
       }
     }
-    if(!disconnected){
+    if (!disconnected) {
       console.log("disconnect cant find socketId")
     }
   })
@@ -147,31 +149,38 @@ io.on('connection', function (socket) {
 function saveSession(param) {
   var sessions,
     messages,
+    session,
     now = new Date()
 
-  sessions = redisClient.hmget(param.from, 'sessions')
-  messages = sessions[param.to]
-  if (!messages) messages = []
-  messages.push(
-    {
-      self: true,
-      content: param.content,
-      date: now
+  redisClient.hmget(param.from, 'sessions', function (error, sessions) {
+    if (error) throw error
+    if (!sessions[0]){
+      sessions = []
+    } else {
+      sessions = JSON.parse(sessions)
     }
-  )
-  redisClient.hmset(param.from, 'sessions', messages)
 
-  sessions = redisClient.hmget(param.to, 'sessions')
-  messages = sessions[param.from]
-  if (!messages) messages = []
-  messages.push(
-    {
-      self: false,
+    var toSession
+    for (var i = 0; i < sessions.length; i++) {
+      if (sessions[i] && sessions[i].loginName === param.to) {
+        toSession = sessions[i]
+      }
+    }
+
+    if(!toSession) {
+      toSession = {}
+      toSession.loginName = param.to
+      toSession.messages = []
+      sessions.push(toSession)
+    }
+    toSession.messages.push(  {
+      from: param.from,
+      to: param.to,
       content: param.content,
       date: now
-    }
-  )
-  redisClient.hmset(param.to, 'sessions', messages)
+    })
+    redisClient.hmset(param.from, 'sessions', JSON.stringify(sessions))
+  })
 }
 
 http.listen(8080, function () {

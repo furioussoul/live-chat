@@ -6,7 +6,7 @@
       ...mapGetters(['userList'])
     },
     methods: {
-      ...mapMutations(['addToSession'])
+      ...mapMutations(['addSession'])
     }
   }
 </script>
@@ -14,7 +14,7 @@
   <div>
     <ul>
       <li v-for="item in userList">
-        <a @click="addToSession(item)" href="#">{{item}}</a>
+        <a @click="addSession(item)" href="#">{{item}}</a>
       </li>
     </ul>
   </div>

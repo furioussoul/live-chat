@@ -26,13 +26,13 @@
 
 <template>
   <div class="message" v-scroll-bottom>
-    <ul v-if="currentToSession">
+    <ul>
       <li v-for="item in currentToSession.messages">
         <p class="time">
-          <span>{{ item.date | time }}</span>
+          <span>{{ item.date }}</span>
         </p>
         <div class="main" :class="{ self: item.self }">
-          <img class="avatar" width="30" height="30" :src="item.self ? user.img : currentToSession.user.img"/>
+          <img class="avatar" width="30" height="30" :src="item.self ? user.img : currentToSession.img"/>
           <div class="text">{{ item.content }}</div>
         </div>
       </li>

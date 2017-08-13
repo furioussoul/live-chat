@@ -26,6 +26,12 @@ function registerEvent() {
   this.socket.on("register",cb)
   this.socket.on("login", cb)
   this.socket.on('sendMsg', function (param) {
+    if(!store.state.currentToSession.messages){
+      store.state.currentToSession.messages = []
+    }
+    if(param.from === store.state.user.loginName){
+      param.self = true
+    }
     store.state.currentToSession.messages.push(param)
   })
   this.socket.on('disconnect', function (loginName) {
