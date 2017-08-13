@@ -38,8 +38,6 @@ var response = {
   }
 }
 
-redisClient.set("aoe", JSON.stringify({loginName: 'szj', age: 20}))
-
 redisClient.get("aoe", function (err, value) {
   if (err) throw(err)
   console.log(JSON.parse(value))
@@ -47,84 +45,36 @@ redisClient.get("aoe", function (err, value) {
 io.on('connection', function (socket) {
   socket.on('register', function (param) {
     if (param.registerCode !== 'xjbmy') {
-      return void socket.emit('login', response.fail('验证秘钥失败'))
+      return void socket.emit('register', response.fail('验证秘钥失败'))
     }
+    redisClient.hmset(param.loginName, param)//登录信息入库
+    loginNameMapSocket[socket.id] = socket//以socketId为键缓存连接
 
-    redisClient.hmset(param.loginName, param)//入库
-    loginNameMapSocket[param.loginName] = socket
-    socket.emit('login', {
+    socket.emit('register', {
       user: {
-        id: 0,
-        name: 'coffce',
-        img: '/static/images/1.jpg'
-      },
-      sessions: [
-        {
-          id: 1,
-          user: {
-            name: 'vue',
-            img: '/static/images/2.png'
-          },
-          messages: [
-            {
-              content: 'Foo',
-              date: now
-            }
-          ]
-        },
-        {
-          id: 2,
-          user: {
-            name: 'webpack',
-            img: '/static/images/3.jpg'
-          },
-          messages: [
-            {
-              content: 'Bar',
-              date: now
-            }
-          ]
-        }
-      ]
+        id: socket.id,
+        name: param.loginName,
+        img: '/static/images/2.jpg' //默认头像
+      }
     })
   })
   socket.on('login', function (param) {
 
-    loginNameMapSocket[param.loginName] = socket
+    //获取用户信息,聊天记录
+    var userInfo = redisClient.hgetall(param.loginName);
+    if(!userInfo || userInfo.password !== param.password){
+      return void socket.emit('login', response.fail('用户名密码错误'))
+    }
+
+    loginNameMapSocket[socket.id] = socket
+
     socket.emit('login', {
       user: {
-        id: 0,
-        name: 'coffce',
-        img: '/static/images/1.jpg'
+        id: socket.id,
+        name: userInfo.nickName || user.loginName,
+        img: userInfo.img || '/static/images/2.jpg'
       },
-      sessions: [
-        {
-          id: 1,
-          user: {
-            name: 'vue',
-            img: '/static/images/2.png'
-          },
-          messages: [
-            {
-              content: 'Foo',
-              date: now
-            }
-          ]
-        },
-        {
-          id: 2,
-          user: {
-            name: 'webpack',
-            img: '/static/images/3.jpg'
-          },
-          messages: [
-            {
-              content: 'Bar',
-              date: now
-            }
-          ]
-        }
-      ]
+      sessions: userInfo.sessions
     })
   })
   socket.on('sendMsg', function (param) {
@@ -146,7 +96,10 @@ io.on('connection', function (socket) {
 
     //数据库里存一下 todo
   })
-  socket.on('disconnect', () => console.log('disconnected'))//如果要记录谁断开链接，可以把账号和socketId映射
+  socket.on('disconnect', function(){
+    console.log(socket.id + " disconnected")
+    delete loginNameMapSocket[socket.id]
+  })
 })
 
 

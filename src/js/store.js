@@ -23,6 +23,10 @@ const store = new Vuex.Store({
     sessions: ({sessions, filterKey}) => sessions.filter(session => session.user.name.toUpperCase().includes(filterKey.toUpperCase()))
   },
   mutations: {
+    /**
+     * @param state
+     * @param sessionId socketId
+     */
     changeCurrentToSession (state, sessionId) {
       state.currentToSession = state.sessions.find(session => session.id === sessionId)
     },
@@ -37,17 +41,17 @@ const store = new Vuex.Store({
     },
     register({state},payload){
       connect(state)
-      state.client.register(payload) //todo 换成登录
+      state.client.register(payload)
     },
     login({state},payload) {
       connect(state)
-      state.client.login(payload) //todo 换成登录
+      state.client.login(payload)
     },
     sendMsg ({state}, content) {
       state.client.sendMsg(
         {
           'from': state.user.id,
-          'to': state.currentToSession.id,
+          'to': state.client.socket.id,
           content
         }
       )
