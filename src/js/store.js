@@ -5,14 +5,12 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import {ChatClient} from './client'
-import resource from 'vue-resource'
 
 Vue.use(Vuex);
-Vue.use(resource);
 
 function connect(state){
   state.client = new ChatClient({host: '127.0.0.1', port: 8080})
-  if (!state.client.connect()) {
+  if (!state.client.connect({a:123})) {
     alert('连接失败')
   }
 }
@@ -39,9 +37,6 @@ const store = new Vuex.Store({
       if(session){
         return
       }
-      Vue.http.get('./getUser', loginName).then(res=>{
-        console.log(res)
-      })
       state.sessions[loginName] = session
     },
     changeCurrentToSession (state, loginName) {

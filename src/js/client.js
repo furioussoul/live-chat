@@ -18,7 +18,6 @@ function registerEvent() {
       store.state.user = rData.user
       store.state.sessions = rData.sessions
       cacheLocal('live-chat', rData.user)
-      store.state.client.getUserList(store.state.user.loginName)
     } else {
       alert(rMsg)
     }
@@ -29,14 +28,17 @@ function registerEvent() {
   this.socket.on('sendMsg', function (param) {
     store.state.currentToSession.messages.push(param)
   })
+  this.socket.on('disconnect', function (loginName) {
+    store.state.userList = store.state.userList.filter(item => item !== loginName)
+  })
 
-  this.socket.on('getUserList', function (param) {
-    store.state.userList = param
+  this.socket.on('getUserList', function (list) {
+    store.state.userList = list.filter(item=> item !== store.state.user.loginName)
   })
 }
 
 //与服务器建立webSocket连接
-ChatClient.prototype.connect = function () {
+ChatClient.prototype.connect = function (data) {
   if (!("io" in window)) {
     alert('浏览器不支持socket.io')
     return false
@@ -70,9 +72,5 @@ export function ChatClient({host, port}) {
 
   this.sendMsg = function (param) {
     this.socket.emit('sendMsg', param);
-  }
-
-  this.getUserList = function (loginName) {
-    this.socket.emit('getUserList',loginName);
   }
 }

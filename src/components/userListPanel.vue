@@ -2,10 +2,10 @@
   import {mapGetters} from 'vuex'
   import {mapMutations} from 'vuex'
   export default{
-      computed:{
-        ...mapGetters(['userList'])
-      },
-    methods:{
+    computed: {
+      ...mapGetters(['userList'])
+    },
+    methods: {
       ...mapMutations(['addToSession'])
     }
   }

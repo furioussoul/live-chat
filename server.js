@@ -21,11 +21,6 @@ app.use('/static', express.static(__dirname + '/dist/static'))
 app.get('/', function (req, res) {
   res.sendFile(__dirname + '/dist/index.html');
 });
-app.get('/getUser', function (req, res) {
-  res.setHeader('Content-Type', 'application/json;charset=utf-8');
-  // res.send({status:"success", message:"delete user success"});
-  //todo 选择用户加入聊天
-});
 
 var dataSource = {},
   loginNameMapSocket = {}, //上线注册列表
@@ -61,7 +56,7 @@ io.on('connection', function (socket) {
       redisClient.sadd('room', param.loginName)
       loginNameMapSocket[param.loginName] = socket
 
-      return void socket.emit('register', response.ok({
+      socket.emit('register', response.ok({
         user: {
           loginName: param.loginName,
           password: userInfo.password,//todo加密
@@ -70,6 +65,10 @@ io.on('connection', function (socket) {
         },
         sessions: userInfo.sessions || []
       }))
+      redisClient.smembers('room',function (error, loginNames) {
+        if(error) throw error
+        io.emit('getUserList', loginNames)
+      })
     })
   })
 
@@ -81,19 +80,27 @@ io.on('connection', function (socket) {
         return void socket.emit('login', response.fail('用户名密码错误'))
       }
 
-      redisClient.sadd('room', param.loginName)
-      redisClient.hmset(param.loginName, 'createTime', new Date())//更新登录时间
-      loginNameMapSocket[param.loginName] = socket
-
-      return void socket.emit('login', response.ok({
-        user: {
-          loginName: userInfo.loginName,
-          password: userInfo.password,//todo加密
-          name: userInfo.nickName || userInfo.loginName,
-          img: userInfo.img || '/static/images/2.png'
-        },
-        sessions: userInfo.sessions || []
-      }))
+      redisClient.smembers('room',function (error, loginNames) {
+        if(error) throw error
+        if (-1 !== loginNames.indexOf(param.loginName)){
+          return void socket.emit('login', response.fail('你的账号在别处被登录了'))//别处登录了
+        }else {
+          redisClient.sadd('room', param.loginName)
+          redisClient.hmset(param.loginName, 'createTime', new Date())//更新登录时间
+          loginNameMapSocket[param.loginName] = socket
+          socket.emit('login', response.ok({
+            user: {
+              loginName: userInfo.loginName,
+              password: userInfo.password,//todo加密
+              name: userInfo.nickName || userInfo.loginName,
+              img: userInfo.img || '/static/images/2.png'
+            },
+            sessions: userInfo.sessions || []
+          }))
+          loginNames.push(param.loginName)
+          io.emit('getUserList', loginNames)
+        }
+      })
     })
   })
 
@@ -122,7 +129,9 @@ io.on('connection', function (socket) {
       if(loginNameMapSocket[loginName].id === socket.id){
         delete loginNameMapSocket[loginName]
         disconnected =true
-        console.log(socket.id + " disconnected")
+        redisClient.srem('room', loginName)
+        io.emit('disconnect', loginName)
+        console.log(loginName + " disconnected")
       }
     }
     if(!disconnected){
