@@ -9,8 +9,6 @@ redisClient.on("error", function (err) {
   console.log("Error " + err);
 });
 
-
-
 const now = new Date();
 
 app.use('/static', express.static(__dirname + '/dist/static'))
@@ -19,26 +17,79 @@ app.get('/', function (req, res) {
   res.sendFile(__dirname + '/dist/index.html');
 });
 
-var dataSource = {}
-var loginNameMapSocket = {} //上线注册列表
-var nameMapName = {} //服务端记录用户映射，可应对权群聊
+var dataSource = {},
+  loginNameMapSocket = {}, //上线注册列表
+  nameMapName = {}, //服务端记录用户映射，可应对权群聊
+  registerCode = 'xjbmy' //注册秘钥
 
-function checkAlive(toName) {
-  if (loginNameMapSocket[toName]) {
-    return true;
+var response = {
+  code: 1,
+  rMsg: 'success',
+  rData: null,
+
+  ok: function (data) {
+    this.rData = data
+    return this
+  },
+  fail: function (msg) {
+    this.code = 0
+    this.rMsg = msg
+    return this
   }
-  return false;
 }
 
+redisClient.set("aoe", JSON.stringify({loginName: 'szj', age: 20}))
+
+redisClient.get("aoe", function (err, value) {
+  if (err) throw(err)
+  console.log(JSON.parse(value))
+})
 io.on('connection', function (socket) {
+  socket.on('register', function (param) {
+    if (param.registerCode !== 'xjbmy') {
+      return void socket.emit('login', response.fail('验证秘钥失败'))
+    }
 
-  socket.on('login', function (param) {
-    redisClient.set("aoe", JSON.stringify({loginName:'szj',age:20}))
-
-    redisClient.get("aoe",function (err, value) {
-      if (err) throw(err)
-      console.log(JSON.parse(value))
+    redisClient.hmset(param.loginName, param)//入库
+    loginNameMapSocket[param.loginName] = socket
+    socket.emit('login', {
+      user: {
+        id: 0,
+        name: 'coffce',
+        img: '/static/images/1.jpg'
+      },
+      sessions: [
+        {
+          id: 1,
+          user: {
+            name: 'vue',
+            img: '/static/images/2.png'
+          },
+          messages: [
+            {
+              content: 'Foo',
+              date: now
+            }
+          ]
+        },
+        {
+          id: 2,
+          user: {
+            name: 'webpack',
+            img: '/static/images/3.jpg'
+          },
+          messages: [
+            {
+              content: 'Bar',
+              date: now
+            }
+          ]
+        }
+      ]
     })
+  })
+  socket.on('login', function (param) {
+
     loginNameMapSocket[param.loginName] = socket
     socket.emit('login', {
       user: {

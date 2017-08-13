@@ -2,6 +2,10 @@ import store from './store'
 
 //注册事件
 function registerEvent() {
+  this.socket.on("register", function ({user, sessions}) {
+    store.state.user = user
+    store.state.sessions = sessions
+  })
   this.socket.on("login", function ({user, sessions}) {
     store.state.user = user
     store.state.sessions = sessions
@@ -35,6 +39,10 @@ export function ChatClient ({host, port}) {
   this.port = port
   this.socket = null
   this.events = []
+
+  this.register = function (param) {
+    this.socket.emit("register",param);
+  }
 
   this.login = function (param) {
     this.socket.emit("login",param);
