@@ -5,9 +5,10 @@ function registerEvent() {
   this.socket.on("initData", function ({user, sessions}) {
     store.state.user = user
     store.state.sessions = sessions
+    store.state.loginSessionId=user.uuid//确定当前登录人
   })
   this.socket.on('sendMsg', function (param) {
-    store.state.sessions.forEach(function (session) {
+    store.state.sessions.forEach(function (session) {//TODO 修改成只在对应id下显示信息
       session.messages.push({
         content:param.content,
         date:new Date()

@@ -16,7 +16,9 @@ const store = new Vuex.Store({
     // 会话列表
     sessions: [],
     // 当前选中的会话
-    currentSessionId: 1,
+    currentSessionId: null,
+    //当前登录的会话
+    loginSessionId:null,
     currentSession: {},//todo 合并
     // 过滤出只包含这个key的会话
     filterKey: ''
@@ -39,10 +41,10 @@ const store = new Vuex.Store({
       if (!state.client.connect()) {
         alert('连接失败')
       }
-      state.client.login({loginName:state.currentSessionId}) //todo 换成登录
+      state.client.login({loginSessionId:state.loginSessionId}) //todo 换成登录
     },
     sendMsg ({state}, content) {
-      state.client.sendMsg({'to': state.currentSessionId, content})
+      state.client.sendMsg({'to': state.currentSessionId,'from':state.loginSessionId, content})
     }
   }
 });
