@@ -5,8 +5,10 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import {ChatClient} from './client'
+import resource from 'vue-resource'
 
 Vue.use(Vuex);
+Vue.use(resource);
 
 function connect(state){
   state.client = new ChatClient({host: '127.0.0.1', port: 8080})
@@ -32,10 +34,16 @@ const store = new Vuex.Store({
     sessions: ({sessions, filterKey}) => sessions.filter(session => session.user.name.toUpperCase().includes(filterKey.toUpperCase()))
   },
   mutations: {
-    /**
-     * @param state
-     * @param loginName
-     */
+    addToSession (state, loginName) {
+      var session = state.sessions.find(session => session.loginName === loginName)
+      if(session){
+        return
+      }
+      Vue.http.get('./getUser', loginName).then(res=>{
+        console.log(res)
+      })
+      state.sessions[loginName] = session
+    },
     changeCurrentToSession (state, loginName) {
       state.currentToSession = state.sessions.find(session => session.loginName === loginName)
     },

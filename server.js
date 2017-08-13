@@ -21,6 +21,11 @@ app.use('/static', express.static(__dirname + '/dist/static'))
 app.get('/', function (req, res) {
   res.sendFile(__dirname + '/dist/index.html');
 });
+app.get('/getUser', function (req, res) {
+  res.setHeader('Content-Type', 'application/json;charset=utf-8');
+  // res.send({status:"success", message:"delete user success"});
+  //todo 选择用户加入聊天
+});
 
 var dataSource = {},
   loginNameMapSocket = {}, //上线注册列表
@@ -104,10 +109,10 @@ io.on('connection', function (socket) {
   })
 
   socket.on('getUserList', function (loginName) {
-    redisClient.smembers('room',function (error, value) {
+    redisClient.smembers('room',function (error, loginNames) {
       if(error) throw error
       var socket = loginNameMapSocket[loginName]
-      socket.emit('getUserList', value)
+      socket.emit('getUserList', loginNames)
     })
   })
 
