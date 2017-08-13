@@ -38,21 +38,18 @@ var response = {
   }
 }
 
-redisClient.get("aoe", function (err, value) {
-  if (err) throw(err)
-  console.log(JSON.parse(value))
-})
 io.on('connection', function (socket) {
   socket.on('register', function (param) {
     if (param.registerCode !== 'xjbmy') {
       return void socket.emit('register', response.fail('验证秘钥失败'))
     }
-    redisClient.hmset(param.loginName, param)//登录信息入库
-    loginNameMapSocket[socket.id] = socket//以socketId为键缓存连接
+    param.createTime = new Date()
+    redisClient.hmset(param.loginName, param)//注册入库
+    loginNameMapSocket[param.loginName] = socket
 
     socket.emit('register', {
       user: {
-        id: socket.id,
+        loginName: param.loginName,
         name: param.loginName,
         img: '/static/images/2.jpg' //默认头像
       }
@@ -62,16 +59,17 @@ io.on('connection', function (socket) {
 
     //获取用户信息,聊天记录
     var userInfo = redisClient.hgetall(param.loginName);
-    if(!userInfo || userInfo.password !== param.password){
+    if (!userInfo || userInfo.password !== param.password) {
       return void socket.emit('login', response.fail('用户名密码错误'))
     }
 
-    loginNameMapSocket[socket.id] = socket
+    redisClient.hmset(param.loginName, 'createTime', new Date())//更新登录时间
+    loginNameMapSocket[param.loginName] = socket
 
     socket.emit('login', {
       user: {
-        id: socket.id,
-        name: userInfo.nickName || user.loginName,
+        loginName: userInfo.loginName,
+        name: userInfo.nickName || userInfo.loginName,
         img: userInfo.img || '/static/images/2.jpg'
       },
       sessions: userInfo.sessions
@@ -82,26 +80,52 @@ io.on('connection', function (socket) {
     var now = new Date(),
       fromSocket = loginNameMapSocket[param.from],
       toSocket = loginNameMapSocket[param.to]
-    if (fromSocket) {
-      param.self = false
-      param.date = now
-      fromSocket.emit('sendMsg', param)
-    }
-    if (toSocket) {
-      param.self = true
-      param.date = now
-      toSocket.emit('sendMsg', param)
-    }
+
+    saveSession(param)
+    fromSocket.emit('sendMsg', param)
+    toSocket.emit('sendMsg', param)
+
     console.log('from ' + param.from + ',to ' + param.to + ' content:' + param.content)
 
     //数据库里存一下 todo
   })
-  socket.on('disconnect', function(){
+  socket.on('disconnect', function () {
     console.log(socket.id + " disconnected")
     delete loginNameMapSocket[socket.id]
   })
 })
 
+/**
+ * @param param
+ * @param self true代表自己发出的，false代表别人发过来的
+ */
+function saveSession(param) {
+  var sessions,
+    messages
+  sessions = redisClient.hmsetnx(param.from, 'sessions', {})
+  messages = sessions[param.to]
+  if (!messages) messages = []
+  messages.push(
+    {
+      self: true,
+      content: param.content,
+      date: now
+    }
+  )
+  redisClient.hmset(param.from, 'sessions', messages)
+
+  sessions = redisClient.hmsetnx(param.to, 'sessions', {})
+  messages = sessions[param.from]
+  if (!messages) messages = []
+  messages.push(
+    {
+      self: false,
+      content: param.content,
+      date: now
+    }
+  )
+  redisClient.hmset(param.to, 'sessions', messages)
+}
 
 http.listen(8080, function () {
   console.log('listening on *:8080');

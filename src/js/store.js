@@ -50,8 +50,8 @@ const store = new Vuex.Store({
     sendMsg ({state}, content) {
       state.client.sendMsg(
         {
-          'from': state.user.id,
-          'to': state.client.socket.id,
+          'from': state.user.loginName,
+          'to': state.currentToSession.loginName,
           content
         }
       )
