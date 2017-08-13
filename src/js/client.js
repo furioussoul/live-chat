@@ -1,11 +1,23 @@
 import store from './store'
 
+//保存登录信息到localstorage
+function cacheLocal(key,value) {
+  if(!value){
+    return window.localStorage.getItem(key)
+  }
+
+  if(typeof value === 'object'){
+    value = JSON.stringify(value)
+  }
+  window.localStorage.setItem(key,value)
+}
 //注册事件
 function registerEvent() {
   this.socket.on("register", function ({code, rMsg, rData}) {
     if (code === 1) {
       store.state.user = rData.user
       store.state.sessions = rData.sessions
+      cacheLocal('live-chat', rData.user)
     } else {
       alert(rMsg)
     }
@@ -14,6 +26,7 @@ function registerEvent() {
     if (code === 1) {
       store.state.user = rData.user
       store.state.sessions = rData.sessions
+      cacheLocal('live-chat', rData.user)
     } else {
       alert(rMsg)
     }

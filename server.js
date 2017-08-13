@@ -1,16 +1,21 @@
 var express = require('express'),
+  cookie = require('cookie-parser'),
   app = express(),
   http = require('http').Server(app),
   io = require('socket.io')(http),
   redis = require("redis"),
   redisClient = redis.createClient('6333', '47.94.2.0')
 
+process.on('uncaughtException', function (err) {
+  console.error('An uncaught error occurred!');
+  console.error(err.stack);
+});
+
 redisClient.on("error", function (err) {
   console.log("Error " + err);
 });
 
-const now = new Date();
-
+app.use(cookie())
 app.use('/static', express.static(__dirname + '/dist/static'))
 
 app.get('/', function (req, res) {
@@ -23,11 +28,8 @@ var dataSource = {},
   registerCode = 'xjbmy' //注册秘钥
 
 var response = {
-  code: 1,
-  rMsg: 'success',
-  rData: null,
-
   ok: function (data) {
+    this.code = 1
     this.rData = data
     return this
   },
@@ -43,42 +45,52 @@ io.on('connection', function (socket) {
     if (param.registerCode !== 'xjbmy') {
       return void socket.emit('register', response.fail('验证秘钥失败'))
     }
-    param.createTime = new Date()
-    redisClient.hmset(param.loginName, param)//注册入库
-    loginNameMapSocket[param.loginName] = socket
-
-    socket.emit('register', {
-      user: {
-        loginName: param.loginName,
-        name: param.loginName,
-        img: '/static/images/2.jpg' //默认头像
+    redisClient.hgetall(param.loginName, function (err, userInfo) {
+      if (err) throw(err)
+      if (userInfo) {
+        return void socket.emit('register', response.fail('用户名已被注册'))
       }
+
+      param.createTime = new Date()
+      redisClient.hmset(param.loginName, param)//注册入库
+      loginNameMapSocket[param.loginName] = socket
+
+      return void socket.emit('register', response.ok({
+        user: {
+          loginName: param.loginName,
+          password: userInfo.password,//todo加密
+          name: param.loginName,
+          img: '/static/images/2.png' //默认头像
+        }
+      }))
     })
   })
+
   socket.on('login', function (param) {
-
     //获取用户信息,聊天记录
-    var userInfo = redisClient.hgetall(param.loginName);
-    if (!userInfo || userInfo.password !== param.password) {
-      return void socket.emit('login', response.fail('用户名密码错误'))
-    }
+    redisClient.hgetall(param.loginName, function (err, userInfo) {
+      if (err) throw(err)
+      if (!userInfo || userInfo.password !== param.password) {
+        return void socket.emit('login', response.fail('用户名密码错误'))
+      }
 
-    redisClient.hmset(param.loginName, 'createTime', new Date())//更新登录时间
-    loginNameMapSocket[param.loginName] = socket
+      redisClient.hmset(param.loginName, 'createTime', new Date())//更新登录时间
+      loginNameMapSocket[param.loginName] = socket
 
-    socket.emit('login', {
-      user: {
-        loginName: userInfo.loginName,
-        name: userInfo.nickName || userInfo.loginName,
-        img: userInfo.img || '/static/images/2.jpg'
-      },
-      sessions: userInfo.sessions
+      return void socket.emit('login', response.ok({
+        user: {
+          loginName: userInfo.loginName,
+          password: userInfo.password,//todo加密
+          name: userInfo.nickName || userInfo.loginName,
+          img: userInfo.img || '/static/images/2.png'
+        },
+        sessions: userInfo.sessions
+      }))
     })
   })
-  socket.on('sendMsg', function (param) {
 
-    var now = new Date(),
-      fromSocket = loginNameMapSocket[param.from],
+  socket.on('sendMsg', function (param) {
+    var fromSocket = loginNameMapSocket[param.from],
       toSocket = loginNameMapSocket[param.to]
 
     saveSession(param)
@@ -86,12 +98,20 @@ io.on('connection', function (socket) {
     toSocket.emit('sendMsg', param)
 
     console.log('from ' + param.from + ',to ' + param.to + ' content:' + param.content)
-
-    //数据库里存一下 todo
   })
+
   socket.on('disconnect', function () {
-    console.log(socket.id + " disconnected")
-    delete loginNameMapSocket[socket.id]
+    var disconnected = false
+    for (var loginName in loginNameMapSocket){
+      if(loginNameMapSocket[loginName].id === socket.id){
+        delete loginNameMapSocket[loginName]
+        disconnected =true
+        console.log(socket.id + " disconnected")
+      }
+    }
+    if(!disconnected){
+      console.log("disconnect cant find socketId")
+    }
   })
 })
 
@@ -101,7 +121,9 @@ io.on('connection', function (socket) {
  */
 function saveSession(param) {
   var sessions,
-    messages
+    messages,
+    now = new Date()
+
   sessions = redisClient.hmsetnx(param.from, 'sessions', {})
   messages = sessions[param.to]
   if (!messages) messages = []

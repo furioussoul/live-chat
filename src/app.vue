@@ -11,13 +11,13 @@
   export default {
     components: {Card, List, TextBox, Message, loginPanel},
     computed: {
-      ...mapGetters(['client'])
+      ...mapGetters(['user'])
     }
   }
 </script>
 
 <template>
-  <div v-if="client" id="app">
+  <div v-if="user" id="app">
     <div class="sidebar">
       <card></card>
       <list></list>

@@ -8,6 +8,13 @@ import {ChatClient} from './client'
 
 Vue.use(Vuex);
 
+function connect(state){
+  state.client = new ChatClient({host: '127.0.0.1', port: 8080})
+  if (!state.client.connect()) {
+    alert('连接失败')
+  }
+}
+
 const store = new Vuex.Store({
   state: {
     client: null,//socket client
@@ -33,12 +40,6 @@ const store = new Vuex.Store({
     setFilterKey: (state, value) => state.filterKey = value
   },
   actions: {
-    connect(state){
-      state.client = new ChatClient({host: '127.0.0.1', port: 8080})
-      if (!state.client.connect()) {
-        alert('连接失败')
-      }
-    },
     register({state},payload){
       connect(state)
       state.client.register(payload)

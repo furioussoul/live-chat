@@ -13,7 +13,31 @@
       }
     },
     methods: {
-      ...mapActions(['login'])
+      ...mapActions(['login']),
+      denglu (e) {
+        if (!this.user.loginName) {
+          alert('用户名不能为空')
+          return
+        }
+        if (!this.user.password) {
+          alert('密码不能为空')
+          return
+        }
+        this.login(this.user);
+      }
+    },
+    mounted(){
+      var identifier = window.localStorage.getItem('live-chat');
+      if(!identifier){
+          return
+      }
+      identifier = JSON.parse(identifier)
+      if (identifier.autoLogin) {
+        this.$store.dispatch('login', identifier)
+      } else {
+        this.user.loginName = identifier.loginName
+        this.user.password = identifier.password
+      }
     }
   }
 </script>
@@ -33,7 +57,7 @@
         <input class="soul-input" type="text" v-model="user.password"/>
       </p>
       <p>
-        <button class="soul-button" @click="login(user)">登录</button>
+        <button class="soul-button" @click="denglu">登录</button>
       </p>
     </div>
   </div>
