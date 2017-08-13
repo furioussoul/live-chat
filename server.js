@@ -1,7 +1,16 @@
-var express = require('express');
-var app = express();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+var express = require('express'),
+  app = express(),
+  http = require('http').Server(app),
+  io = require('socket.io')(http),
+  redis = require("redis"),
+  redisClient = redis.createClient('6333', '47.94.2.0')
+
+redisClient.on("error", function (err) {
+  console.log("Error " + err);
+});
+
+
+
 const now = new Date();
 
 app.use('/static', express.static(__dirname + '/dist/static'))
@@ -14,8 +23,8 @@ var dataSource = {}
 var loginNameMapSocket = {} //上线注册列表
 var nameMapName = {} //服务端记录用户映射，可应对权群聊
 
-function checkAlive(toName){
-  if(loginNameMapSocket[toName]) {
+function checkAlive(toName) {
+  if (loginNameMapSocket[toName]) {
     return true;
   }
   return false;
@@ -24,6 +33,12 @@ function checkAlive(toName){
 io.on('connection', function (socket) {
 
   socket.on('login', function (param) {
+    redisClient.set("aoe", JSON.stringify({loginName:'szj',age:20}))
+
+    redisClient.get("aoe",function (err, value) {
+      if (err) throw(err)
+      console.log(JSON.parse(value))
+    })
     loginNameMapSocket[param.loginName] = socket
     socket.emit('login', {
       user: {
@@ -62,20 +77,21 @@ io.on('connection', function (socket) {
     })
   })
   socket.on('sendMsg', function (param) {
+
     var now = new Date(),
-     fromSocket = loginNameMapSocket[param.from],
-     toSocket = loginNameMapSocket[param.to]
-    if(fromSocket) {
+      fromSocket = loginNameMapSocket[param.from],
+      toSocket = loginNameMapSocket[param.to]
+    if (fromSocket) {
       param.self = false
       param.date = now
       fromSocket.emit('sendMsg', param)
     }
-    if(toSocket) {
+    if (toSocket) {
       param.self = true
       param.date = now
       toSocket.emit('sendMsg', param)
     }
-    console.log('from '+ param.from + ',to ' + param.to + ' content:' + param.content)
+    console.log('from ' + param.from + ',to ' + param.to + ' content:' + param.content)
 
     //数据库里存一下 todo
   })

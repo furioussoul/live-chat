@@ -29,12 +29,12 @@ const store = new Vuex.Store({
     setFilterKey: (state, value) => state.filterKey = value
   },
   actions: {
-    login({state}) {
+    login({state},payload) {
       state.client = new ChatClient({host: '127.0.0.1', port: 8080})
       if (!state.client.connect()) {
         alert('连接失败')
       }
-      state.client.login({loginName: 1}) //todo 换成登录
+      state.client.login(payload) //todo 换成登录
     },
     sendMsg ({state}, content) {
       state.client.sendMsg(
