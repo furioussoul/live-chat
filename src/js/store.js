@@ -19,6 +19,7 @@ const store = new Vuex.Store({
   state: {
     client: null,//socket client
     user: null, // 当前用户
+    userList:null,
     sessions: [],// 会话列表
     currentToSession: {}, // 当前选中的对方的会话
     filterKey: '' //过滤会话列表
@@ -26,16 +27,17 @@ const store = new Vuex.Store({
   getters: {
     client: (state) => state.client,
     user: (state) => state.user,
+    userList:(state) => state.userList,
     currentToSession: (state) => state.currentToSession,
     sessions: ({sessions, filterKey}) => sessions.filter(session => session.user.name.toUpperCase().includes(filterKey.toUpperCase()))
   },
   mutations: {
     /**
      * @param state
-     * @param sessionId socketId
+     * @param loginName
      */
-    changeCurrentToSession (state, sessionId) {
-      state.currentToSession = state.sessions.find(session => session.id === sessionId)
+    changeCurrentToSession (state, loginName) {
+      state.currentToSession = state.sessions.find(session => session.loginName === loginName)
     },
     setFilterKey: (state, value) => state.filterKey = value
   },

@@ -53,6 +53,7 @@ io.on('connection', function (socket) {
 
       param.createTime = new Date()
       redisClient.hmset(param.loginName, param)//注册入库
+      redisClient.sadd('room', param.loginName)
       loginNameMapSocket[param.loginName] = socket
 
       return void socket.emit('register', response.ok({
@@ -61,7 +62,8 @@ io.on('connection', function (socket) {
           password: userInfo.password,//todo加密
           name: param.loginName,
           img: '/static/images/2.png' //默认头像
-        }
+        },
+        sessions: userInfo.sessions || []
       }))
     })
   })
@@ -74,6 +76,7 @@ io.on('connection', function (socket) {
         return void socket.emit('login', response.fail('用户名密码错误'))
       }
 
+      redisClient.sadd('room', param.loginName)
       redisClient.hmset(param.loginName, 'createTime', new Date())//更新登录时间
       loginNameMapSocket[param.loginName] = socket
 
@@ -84,7 +87,7 @@ io.on('connection', function (socket) {
           name: userInfo.nickName || userInfo.loginName,
           img: userInfo.img || '/static/images/2.png'
         },
-        sessions: userInfo.sessions
+        sessions: userInfo.sessions || []
       }))
     })
   })
@@ -98,6 +101,14 @@ io.on('connection', function (socket) {
     toSocket.emit('sendMsg', param)
 
     console.log('from ' + param.from + ',to ' + param.to + ' content:' + param.content)
+  })
+
+  socket.on('getUserList', function (loginName) {
+    redisClient.smembers('room',function (error, value) {
+      if(error) throw error
+      var socket = loginNameMapSocket[loginName]
+      socket.emit('getUserList', value)
+    })
   })
 
   socket.on('disconnect', function () {
@@ -124,7 +135,7 @@ function saveSession(param) {
     messages,
     now = new Date()
 
-  sessions = redisClient.hmsetnx(param.from, 'sessions', {})
+  sessions = redisClient.hmget(param.from, 'sessions')
   messages = sessions[param.to]
   if (!messages) messages = []
   messages.push(
@@ -136,7 +147,7 @@ function saveSession(param) {
   )
   redisClient.hmset(param.from, 'sessions', messages)
 
-  sessions = redisClient.hmsetnx(param.to, 'sessions', {})
+  sessions = redisClient.hmget(param.to, 'sessions')
   messages = sessions[param.from]
   if (!messages) messages = []
   messages.push(

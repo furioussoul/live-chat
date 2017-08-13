@@ -13,26 +13,25 @@ function cacheLocal(key,value) {
 }
 //注册事件
 function registerEvent() {
-  this.socket.on("register", function ({code, rMsg, rData}) {
+  function cb({code, rMsg, rData}) {
     if (code === 1) {
       store.state.user = rData.user
       store.state.sessions = rData.sessions
       cacheLocal('live-chat', rData.user)
+      store.state.client.getUserList(store.state.user.loginName)
     } else {
       alert(rMsg)
     }
-  })
-  this.socket.on("login", function ({code, rMsg, rData}) {
-    if (code === 1) {
-      store.state.user = rData.user
-      store.state.sessions = rData.sessions
-      cacheLocal('live-chat', rData.user)
-    } else {
-      alert(rMsg)
-    }
-  })
+  }
+
+  this.socket.on("register",cb)
+  this.socket.on("login", cb)
   this.socket.on('sendMsg', function (param) {
     store.state.currentToSession.messages.push(param)
+  })
+
+  this.socket.on('getUserList', function (param) {
+    store.state.userList = param
   })
 }
 
@@ -71,5 +70,9 @@ export function ChatClient({host, port}) {
 
   this.sendMsg = function (param) {
     this.socket.emit('sendMsg', param);
+  }
+
+  this.getUserList = function (loginName) {
+    this.socket.emit('getUserList',loginName);
   }
 }
