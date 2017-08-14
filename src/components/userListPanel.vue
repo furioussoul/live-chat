@@ -14,7 +14,8 @@
   <div>
     <ul>
       <li v-for="item in userList">
-        <a @click="addSession(item)" href="#">{{item}}</a>
+        <img style="width: 20px;height: 20px;display: inline-block;vertical-align: middle" :src="item.img"/>
+        <a @click="addSession(item.loginName)" href="#">{{item.loginName}}</a>
       </li>
     </ul>
   </div>

@@ -54,21 +54,23 @@ io.on('connection', function (socket) {
       param.createTime = new Date()
       param.img = '/static/images/2.png' //默认头像
       redisClient.hmset(param.loginName, param)//注册入库
-      redisClient.sadd('room', param.loginName)
       loginNameMapSocket[param.loginName] = socket
 
+      var user = {
+        loginName: param.loginName,
+        password: param.password,//todo加密
+        name: param.loginName,
+        img: param.img
+      }
       socket.emit('register', response.ok({
-        user: {
-          loginName: param.loginName,
-          password: param.password,//todo加密
-          name: param.loginName,
-          img: param.img
-        },
+        user: user,
         sessions: userInfo.sessions || []
       }))
-      redisClient.smembers('room', function (error, loginNames) {
+      redisClient.smembers('room', function (error, loginUsers) {
         if (error) throw error
-        io.emit('getUserList', loginNames)
+        loginUsers.push(JSON.stringify(user))
+        io.emit('getUserList', loginUsers)
+        redisClient.sadd('room', JSON.stringify(user))
       })
     })
   })
@@ -81,28 +83,32 @@ io.on('connection', function (socket) {
         return void socket.emit('login', response.fail('用户名密码错误'))
       }
 
-      redisClient.smembers('room', function (error, loginNames) {
+      redisClient.smembers('room', function (error, loginUsers) {
         if (error) throw error
-        if (-1 !== loginNames.indexOf(param.loginName)) {
-          return void socket.emit('login', response.fail('你的账号在别处被登录了'))//别处登录了
-        } else {
-          redisClient.sadd('room', param.loginName)
-          redisClient.hmset(param.loginName, 'createTime', new Date())//更新登录时间
-          loginNameMapSocket[param.loginName] = socket
-          socket.emit('login', response.ok({
-            user: {
-              loginName: userInfo.loginName,
-              password: userInfo.password,//todo加密
-              name: userInfo.nickName || userInfo.loginName,
-              img: userInfo.img
-            },
-            sessions: userInfo.sessions
-              ? JSON.parse(userInfo.sessions)
-              : []
-          }))
-          loginNames.push(param.loginName)
-          io.emit('getUserList', loginNames)
+
+        for (var i = 0; i < loginUsers.length; i++) {
+          if (JSON.parse(loginUsers[i]).loginName === param.loginName) {
+            return void socket.emit('login', response.fail('你的账号在别处被登录了'))//别处登录了 todo 踢掉
+          }
         }
+        redisClient.hmset(param.loginName, 'loginTime', new Date())//更新登录时间
+        loginNameMapSocket[param.loginName] = socket
+
+        var user = {
+          loginName: userInfo.loginName,
+          password: userInfo.password,//todo加密
+          name: userInfo.nickName || userInfo.loginName,
+          img: userInfo.img
+        }
+        socket.emit('login', response.ok({
+          user: user ,
+          sessions: userInfo.sessions
+            ? JSON.parse(userInfo.sessions)
+            : []
+        }))
+        loginUsers.push(JSON.stringify(user))
+        io.emit('getUserList', loginUsers)
+        redisClient.sadd('room',  JSON.stringify(user))
       })
     })
   })
@@ -117,9 +123,9 @@ io.on('connection', function (socket) {
     redisClient.hgetall(param.from, function (error, userInfo) {
       if (error) throw error
       var sessions = userInfo.sessions
-      if(!sessions){
+      if (!sessions) {
         sessions = []
-      }else {
+      } else {
         sessions = JSON.parse(sessions)
       }
 
@@ -130,7 +136,7 @@ io.on('connection', function (socket) {
         }
       }
 
-      if(!toSession) {
+      if (!toSession) {
         toSession = {}
         toSession.loginName = param.to
         toSession.img = userInfo.img
@@ -138,7 +144,7 @@ io.on('connection', function (socket) {
         sessions.push(toSession)
       }
 
-      toSession.messages.push(  {
+      toSession.messages.push({
         from: param.from,
         to: param.to,
         content: param.content,
@@ -147,6 +153,7 @@ io.on('connection', function (socket) {
       })
 
       param.img = userInfo.img
+      param.self = true
       loginNameMapSocket[param.from].emit('sendMsg', param)
       redisClient.hmset(param.from, 'sessions', JSON.stringify(sessions))
     })
@@ -154,9 +161,9 @@ io.on('connection', function (socket) {
     redisClient.hgetall(param.to, function (error, userInfo) {
       if (error) throw error
       var sessions = userInfo.sessions
-      if(!sessions){
+      if (!sessions) {
         sessions = []
-      }else {
+      } else {
         sessions = JSON.parse(sessions)
       }
 
@@ -167,7 +174,7 @@ io.on('connection', function (socket) {
         }
       }
 
-      if(!fromSession) {
+      if (!fromSession) {
         fromSession = {}
         fromSession.loginName = param.from
         fromSession.img = userInfo.img
@@ -175,7 +182,7 @@ io.on('connection', function (socket) {
         sessions.push(fromSession)
       }
 
-      fromSession.messages.push(  {
+      fromSession.messages.push({
         from: param.from,
         to: param.to,
         content: param.content,
@@ -183,6 +190,7 @@ io.on('connection', function (socket) {
         self: false
       })
       param.img = userInfo.img
+      param.self = false
       loginNameMapSocket[param.to].emit('sendMsg', param)
       redisClient.hmset(param.to, 'sessions', JSON.stringify(sessions))
     })
@@ -204,9 +212,18 @@ io.on('connection', function (socket) {
       if (loginNameMapSocket[loginName].id === socket.id) {
         delete loginNameMapSocket[loginName]
         disconnected = true
-        redisClient.srem('room', loginName)
-        io.emit('disconnect', loginName)
-        console.log(loginName + " disconnected")
+        redisClient.smembers('room', function (error, loginUsers) {
+          if (error) throw error
+          for(var i = 0 ; i < loginUsers.length;i++){
+            var userStr = loginUsers[i]
+            var userObj = JSON.parse(userStr)
+            if(userObj.loginName === loginName){
+              redisClient.srem('room',userStr)
+            }
+          }
+          io.emit('disconnect', loginName)
+          console.log(loginName + " disconnected")
+        })
       }
     }
     if (!disconnected) {

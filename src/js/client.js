@@ -30,9 +30,6 @@ function registerEvent() {
     if(!store.state.currentToSession.messages){
       store.state.currentToSession.messages = []
     }
-    if(param.from === store.state.user.loginName){
-      param.self = true
-    }
     store.state.currentToSession.messages.push(param)
   })
   this.socket.on('disconnect', function (loginName) {
@@ -40,7 +37,12 @@ function registerEvent() {
   })
 
   this.socket.on('getUserList', function (list) {
-    store.state.userList = list.filter(item=> item !== store.state.user.loginName)
+    var userList = []
+    list.forEach(user => {
+      userList.push(JSON.parse(user))
+    })
+    console.log(userList)
+    store.state.userList = userList.filter(item => item.loginName !== store.state.user.loginName)
   })
 }
 

@@ -29,7 +29,7 @@
     <ul>
       <li v-for="item in currentToSession.messages">
         <p class="time">
-          <span>{{ item.date }}</span>
+          <span>{{ item.date | time}}</span>
         </p>
         <div class="main" :class="{ self: item.self }">
           <img class="avatar" width="30" height="30" :src="item.self ? user.img : currentToSession.img"/>
