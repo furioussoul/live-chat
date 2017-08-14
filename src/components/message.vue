@@ -2,7 +2,7 @@
   import {mapGetters} from 'vuex'
   export default {
     computed: {
-      ...mapGetters(['user', 'currentToSession'])
+      ...mapGetters(['user', 'currentToSession','userList'])
     },
     filters: {
       // 将日期过滤为 hour:minutes
@@ -20,16 +20,8 @@
           el.scrollTop = el.scrollHeight - el.clientHeight;
         }
       }
-    },
-    mounted(){
-        console.log(this.currentToSession)
-    },
-    watch:{
-        'currentToSession'(a,b){
-            console.log(a,b)
-      }
     }
-  };
+  }
 </script>
 
 <template>

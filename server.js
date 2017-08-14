@@ -201,14 +201,6 @@ io.on('connection', function (socket) {
     console.log('from ' + param.from + ',to ' + param.to + ' content:' + param.content)
   })
 
-  socket.on('getUserList', function (loginName) {
-    redisClient.smembers('room', function (error, loginNames) {
-      if (error) throw error
-      var socket = loginNameMapSocket[loginName]
-      socket.emit('getUserList', loginNames)
-    })
-  })
-
   socket.on('disconnect', function () {
     var disconnected = false,
       disconnectName

@@ -20,6 +20,7 @@ function registerEvent() {
       if(rData.sessions && rData.sessions[0]){
         store.state.currentToSession = rData.sessions[0]
       }
+      console.log(store)
       cacheLocal('live-chat', rData.user)
     } else {
       alert(rMsg)
@@ -29,8 +30,21 @@ function registerEvent() {
   this.socket.on("register",cb)
   this.socket.on("login", cb)
   this.socket.on('sendMsg', function (param) {
-    store.state.currentToSession.messages.push(param)
-    console.log(store.state.currentToSession)
+    var messages = []
+    if(store.state.currentToSession.messages){
+      store.state.currentToSession.messages.forEach(msg=>{
+        messages.push(msg)
+      })
+    }
+    messages.push(param)
+
+    var session = {
+      loginName:store.state.currentToSession.loginName,
+      img:store.state.currentToSession.img,
+      messages:messages
+    }
+    //要想绑定内部属性必须复制一个对象
+    store.state.currentToSession = session
   })
   this.socket.on('disconnect', function (loginName) {
     store.state.userList = store.state.userList.filter(item => item !== loginName)
