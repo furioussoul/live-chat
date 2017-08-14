@@ -20,13 +20,21 @@
           el.scrollTop = el.scrollHeight - el.clientHeight;
         }
       }
+    },
+    mounted(){
+        console.log(this.currentToSession)
+    },
+    watch:{
+        'currentToSession'(a,b){
+            console.log(a,b)
+      }
     }
   };
 </script>
 
 <template>
   <div class="message" v-scroll-bottom>
-    <ul>
+    <ul v-if="currentToSession">
       <li v-for="item in currentToSession.messages">
         <p class="time">
           <span>{{ item.date | time}}</span>

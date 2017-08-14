@@ -144,17 +144,18 @@ io.on('connection', function (socket) {
         sessions.push(toSession)
       }
 
-      toSession.messages.push({
+      var emitData = {
         from: param.from,
         to: param.to,
         content: param.content,
         date: now,
         self: true
-      })
+      }
+      toSession.messages.push(emitData)
 
       param.img = userInfo.img
       param.self = true
-      loginNameMapSocket[param.from].emit('sendMsg', param)
+      loginNameMapSocket[param.from].emit('sendMsg', emitData)
       redisClient.hmset(param.from, 'sessions', JSON.stringify(sessions))
     })
 
@@ -182,16 +183,18 @@ io.on('connection', function (socket) {
         sessions.push(fromSession)
       }
 
-      fromSession.messages.push({
+
+      var emitData = {
         from: param.from,
         to: param.to,
         content: param.content,
         date: now,
         self: false
-      })
+      }
+      fromSession.messages.push(emitData)
       param.img = userInfo.img
       param.self = false
-      loginNameMapSocket[param.to].emit('sendMsg', param)
+      loginNameMapSocket[param.to].emit('sendMsg', emitData)
       redisClient.hmset(param.to, 'sessions', JSON.stringify(sessions))
     })
 
@@ -207,25 +210,27 @@ io.on('connection', function (socket) {
   })
 
   socket.on('disconnect', function () {
-    var disconnected = false
+    var disconnected = false,
+      disconnectName
     for (var loginName in loginNameMapSocket) {
       if (loginNameMapSocket[loginName].id === socket.id) {
         delete loginNameMapSocket[loginName]
         disconnected = true
-        redisClient.smembers('room', function (error, loginUsers) {
-          if (error) throw error
-          for(var i = 0 ; i < loginUsers.length;i++){
-            var userStr = loginUsers[i]
-            var userObj = JSON.parse(userStr)
-            if(userObj.loginName === loginName){
-              redisClient.srem('room',userStr)
-            }
-          }
-          io.emit('disconnect', loginName)
-          console.log(loginName + " disconnected")
-        })
+        disconnectName= loginName
       }
     }
+    redisClient.smembers('room', function (error, loginUsers) {
+      if (error) throw error
+      for(var j = 0 ; j < loginUsers.length;j++){
+        var userStr = loginUsers[j]
+        var userObj = JSON.parse(userStr)
+        if(userObj.loginName === disconnectName){
+          redisClient.srem('room',userStr)
+        }
+      }
+      io.emit('disconnect', loginName)
+      console.log(loginName + " disconnected")
+    })
     if (!disconnected) {
       console.log("disconnect cant find socketId")
     }

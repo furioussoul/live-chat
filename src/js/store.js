@@ -21,14 +21,20 @@ const store = new Vuex.Store({
     user: null, // 当前用户
     userList: null,
     sessions: [],// 会话列表
-    currentToSession: {}, // 当前选中的对方的会话
+    currentToSession: {
+      loginName:'',
+      img:'',
+      messages:[]
+    }, // 当前选中的对方的会话
     filterKey: '' //过滤会话列表
   },
   getters: {
     client: (state) => state.client,
     user: (state) => state.user,
     userList: (state) => state.userList,
-    currentToSession: (state) => state.currentToSession,
+    currentToSession(state){
+      return state.currentToSession
+    },
     sessions({sessions, filterKey}){
       if(!filterKey){
         return sessions
@@ -37,8 +43,25 @@ const store = new Vuex.Store({
     }
   },
   mutations: {
-    addSession (state, loginName) {
-      state.currentToSession.loginName = loginName
+    addSession (state, currentToSession) {
+      var csession
+      state.sessions.forEach(session=>{
+        if(session.loginName === currentToSession.loginName){
+          csession = session
+        }
+      })
+      if(!csession){
+        if(!currentToSession.messages){
+          currentToSession.messages = []
+        }
+        state.currentToSession = currentToSession
+        state.sessions.push(state.currentToSession)
+      }else {
+        if(!csession.messages){
+          csession.messages = []
+        }
+        state.currentToSession = csession
+      }
     },
     changeCurrentToSession (state, loginName) {
       state.currentToSession = state.sessions.find(session => session.loginName === loginName)
