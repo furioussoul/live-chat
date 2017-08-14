@@ -169,7 +169,7 @@ io.on('connection', function (socket) {
 
       if(!fromSession) {
         fromSession = {}
-        fromSession.loginName = param.to
+        fromSession.loginName = param.from
         fromSession.img = userInfo.img
         fromSession.messages = []
         sessions.push(fromSession)
@@ -184,7 +184,7 @@ io.on('connection', function (socket) {
       })
       param.img = userInfo.img
       loginNameMapSocket[param.to].emit('sendMsg', param)
-      redisClient.hmset(param.from, 'sessions', JSON.stringify(sessions))
+      redisClient.hmset(param.to, 'sessions', JSON.stringify(sessions))
     })
 
     console.log('from ' + param.from + ',to ' + param.to + ' content:' + param.content)

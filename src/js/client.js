@@ -16,13 +16,6 @@ function registerEvent() {
   function cb({code, rMsg, rData}) {
     if (code === 1) {
       store.state.user = rData.user
-      if(rData.sessions && rData.sessions.length > 0){
-        rData.sessions.forEach(session=>{
-          if (session.messages && session.messages.length > 0) {
-            session.messages.forEach(msg => msg.self = msg.from === store.state.user.loginName)
-          }
-        })
-      }
       store.state.sessions = rData.sessions
       store.state.currentToSession = rData.sessions[0] || {}
       cacheLocal('live-chat', rData.user)
