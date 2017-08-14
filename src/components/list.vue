@@ -18,8 +18,10 @@
 
 <template>
   <div class="list">
-    <ul v-if="currentToSession">
-      <li v-for="item in sessions" :class="{ active: item.loginName === currentToSession.loginName }" @click="changeCurrentToSession(item.loginName)">
+    <ul>
+      <li v-for="(item, index) in sessions"
+          :class="{ active: currentToSession.loginName ? item.loginName === currentToSession.loginName : index == 0}"
+          @click="changeCurrentToSession(item.loginName)">
         <img class="avatar" width="30" height="30" :alt="item.loginName" :src="item.img">
         <p class="name">{{item.loginName}}</p>
       </li>
