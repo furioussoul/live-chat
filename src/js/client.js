@@ -1,4 +1,7 @@
 import store from './store'
+import {
+  flashInfo
+} from './notification'
 
 //保存登录信息到localstorage
 function cacheLocal(key, value) {
@@ -20,7 +23,6 @@ function registerEvent() {
       if (rData.sessions && rData.sessions[0]) {
         store.state.currentToSession = rData.sessions[0]
       }
-      console.log(store)
       cacheLocal('live-chat', rData.user)
     } else {
       alert(rMsg)
@@ -30,6 +32,7 @@ function registerEvent() {
   this.socket.on("register", cb)
   this.socket.on("login", cb)
   this.socket.on('sendMsg', function (param) {//todo 改名-》getMsg
+    flashInfo.flash = true
     var exitSession
     store.state.sessions.forEach(session => {
       if (session.loginName === param.from) {

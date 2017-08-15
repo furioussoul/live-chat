@@ -12,6 +12,13 @@
       ...mapMutations([
           'changeCurrentToSession'
       ])
+    },
+    filters:{
+      truncateStr(value){
+          if(value){
+              return value.substring(0,10)
+          }
+      }
     }
   };
 </script>
@@ -23,7 +30,7 @@
           :class="{ active: currentToSession.loginName ? item.loginName === currentToSession.loginName : index == 0}"
           @click="changeCurrentToSession(item.loginName)">
         <img class="avatar" width="30" height="30" :alt="item.loginName" :src="item.img">
-        <p class="name">{{item.loginName}}</p>
+        <p class="name">{{item.loginName | truncateStr}}</p>
       </li>
     </ul>
   </div>
@@ -48,10 +55,11 @@
       vertical-align: middle;
     }
     .avatar {
+      display: block;
       border-radius: 2px;
     }
     .name {
-      display: inline-block;
+      display: block;
       margin: 0 0 0 15px;
     }
   }

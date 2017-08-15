@@ -6,17 +6,17 @@
   export default{
     data(){
       return {
-        showLoginForm:true,
+        showLoginForm: true,
         user: {
           loginName: '',
           password: '',
           confirmPassword: '',
-          registerCode:''
+          registerCode: ''
         }
       }
     },
     methods: {
-      ...mapActions(['login','register']),
+      ...mapActions(['login', 'register']),
       denglu () {
         if (!this.user.loginName) {
           alert('用户名不能为空')
@@ -48,13 +48,13 @@
         this.register(this.user);
       },
       toggleLogin(){
-          this.showLoginForm = !this.showLoginForm
+        this.showLoginForm = !this.showLoginForm
       }
     },
     mounted(){
       var identifier = window.localStorage.getItem('live-chat');
-      if(!identifier){
-          return
+      if (!identifier) {
+        return
       }
       identifier = JSON.parse(identifier)
       if (identifier.autoLogin) {
@@ -82,10 +82,10 @@
           </span>
           <input class="soul-input" type="text" v-model="user.password"/>
         </p>
-        <p>
+        <div class="loginButtonPanel">
           <a class="toggle" @click="toggleLogin">还没注册？</a>
           <button class="soul-button" @click="denglu">登录</button>
-        </p>
+        </div>
       </div>
       <div class="register" v-show="!showLoginForm">
         <p>
@@ -112,17 +112,17 @@
           </span>
           <input class="soul-input" type="text" v-model="user.registerCode"/>
         </p>
-        <p>
+        <div class="loginButtonPanel">
           <a class="toggle" @click="toggleLogin">已经注册？</a>
           <button class="soul-button" @click="zhuce">注册</button>
-        </p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 <style lang="less" scoped>
   .soul-button {
-    margin: 0 auto;
+    margin-left:2%;;
     font-weight: 400;
     text-align: center;
     vertical-align: middle;
@@ -149,22 +149,41 @@
     }
   }
 
-  #loginForm {
-    position: absolute;
-    top: 100px;
-    left: 40px;
-    width: 230px;
+  #loginPanel {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 3px;
+    background-color: rgb(255, 255, 255);
   }
 
-  .toggle{
+  #loginForm {
+    width: 80%;
+  }
+
+  .loginButtonPanel {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+  }
+
+  .toggle {
     color: blue;
-    &:hover{
+    &:hover {
       cursor: pointer;
     }
   }
 
   .soul-label {
-    width: 17%;
+    width: 20%;
     display: inline-block;
     text-align: center;
   }
@@ -191,14 +210,4 @@
       -webkit-box-shadow: 0 0 18px rgba(111, 1, 32, 3);
     }
   }
-
-  #loginPanel {
-    margin: 20px auto;
-    width: 300px;
-    height: 400px;
-    border-radius: 3px;
-    background-color: rgb(255, 255, 255);
-    position: relative;
-  }
-
 </style>

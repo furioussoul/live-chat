@@ -6,6 +6,10 @@
   import loginPanel from './components/loginPanel.vue';
   import userListPanel from './components/userListPanel.vue';
   import {
+      flash_title
+  } from './js/notification'
+
+  import {
     mapGetters,
     mapActions
   } from 'vuex'
@@ -13,12 +17,15 @@
     components: {Card, List, TextBox, Message, loginPanel, userListPanel},
     computed: {
       ...mapGetters(['user'])
+    },
+    mounted(){
+      setInterval(flash_title, 1000); //2秒之后调用一次
     }
   }
 </script>
 
 <template>
-  <div v-if="user" id="app">
+  <div class="view" v-if="user">
     <div class="sidebar">
       <card></card>
       <list></list>
@@ -31,23 +38,16 @@
       <userListPanel></userListPanel>
     </div>
   </div>
-  <div v-else>
+  <div class="view" v-else>
     <loginPanel></loginPanel>
   </div>
 </template>
 
 <style lang="less" scoped>
-  .userListPanel {
-    position: fixed;
-    top:20px;
-    right: 100px;
-    width:100px;
-    background-color: white;
-  }
-  #app {
-    margin: 20px auto;
-    width: 900px;
-    height: 600px;
+  .view {
+    margin: 0 auto;
+    width: 100%;
+    height: 100%;
 
     overflow: hidden;
     border-radius: 3px;
@@ -57,12 +57,12 @@
     }
     .sidebar {
       float: left;
-      width: 200px;
+      width: 25%;
       color: #f4f4f4;
       background-color: #2e3238;
     }
     .main {
-      width: 600px;
+      width: 75%;
       position: relative;
       overflow: hidden;
       background-color: #eee;
@@ -77,4 +77,25 @@
       height: ~'calc(100% - 160px)';
     }
   }
+
+  .userListPanel {
+    position: fixed;
+    top: 20px;
+    right: 100px;
+    width: 100px;
+    background-color: white;
+  }
+
+  @media screen and (min-width: 1200px) {
+    .view{
+      width: 900px;
+      height: 100%;
+    }
+    .loginPanel{
+      width: 900px;
+      height: 100%;
+      margin: 0 auto;
+    }
+  }
+
 </style>
