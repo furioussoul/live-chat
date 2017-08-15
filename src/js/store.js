@@ -9,7 +9,8 @@ import {ChatClient} from './client'
 Vue.use(Vuex);
 
 function connect(state) {
-  state.client = new ChatClient({host: '172.17.107.26', port: 80})
+  // state.client = new ChatClient({host: '47.94.2.0', port: 80})//todo js获取origin
+  state.client = new ChatClient({host: '127.0.0.1', port: 8080})//todo js获取origin
   if (!state.client.connect()) {
     alert('连接失败')
   }
@@ -37,7 +38,7 @@ const store = new Vuex.Store({
       if (!filterKey) {
         return sessions
       }
-      sessions.filter(session => session.user.loginName.toUpperCase().includes(filterKey.toUpperCase()))
+      return sessions.filter(session => session.loginName.toUpperCase().includes(filterKey.toUpperCase()))
     }
   },
   mutations: {
@@ -89,6 +90,7 @@ const store = new Vuex.Store({
         from: state.user.loginName,
         to: state.currentToSession.loginName,
         content: content,
+        self: true,
         date: new Date()
       }
       messages.push(param)

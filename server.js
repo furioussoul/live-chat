@@ -101,14 +101,14 @@ io.on('connection', function (socket) {
           img: userInfo.img
         }
         socket.emit('login', response.ok({
-          user: user ,
+          user: user,
           sessions: userInfo.sessions
             ? JSON.parse(userInfo.sessions)
             : []
         }))
         loginUsers.push(JSON.stringify(user))
         io.emit('getUserList', loginUsers)
-        redisClient.sadd('room',  JSON.stringify(user))
+        redisClient.sadd('room', JSON.stringify(user))
       })
     })
   })
@@ -120,9 +120,9 @@ io.on('connection', function (socket) {
       session,
       now = new Date()
 
-    redisClient.hgetall(param.from, function (error, userInfo) {
+    redisClient.hgetall(param.from, function (error, fromUserInfo) {
       if (error) throw error
-      var sessions = userInfo.sessions
+      var sessions = fromUserInfo.sessions
       if (!sessions) {
         sessions = []
       } else {
@@ -139,7 +139,7 @@ io.on('connection', function (socket) {
       if (!toSession) {
         toSession = {}
         toSession.loginName = param.to
-        toSession.img = userInfo.img
+        toSession.img = fromUserInfo.img
         toSession.messages = []
         sessions.push(toSession)
       }
@@ -152,51 +152,46 @@ io.on('connection', function (socket) {
         self: true
       }
       toSession.messages.push(emitData)
-
-      param.img = userInfo.img
-      param.self = true
       redisClient.hmset(param.from, 'sessions', JSON.stringify(sessions))
-    })
 
-    redisClient.hgetall(param.to, function (error, userInfo) {
-      if (error) throw error
-      var sessions = userInfo.sessions
-      if (!sessions) {
-        sessions = []
-      } else {
-        sessions = JSON.parse(sessions)
-      }
-
-      var fromSession
-      for (var i = 0; i < sessions.length; i++) {
-        if (sessions[i] && sessions[i].loginName === param.from) {
-          fromSession = sessions[i]
+      redisClient.hgetall(param.to, function (error, toUserInfo) {
+        if (error) throw error
+        var sessions = toUserInfo.sessions
+        if (!sessions) {
+          sessions = []
+        } else {
+          sessions = JSON.parse(sessions)
         }
-      }
 
-      if (!fromSession) {
-        fromSession = {}
-        fromSession.loginName = param.from
-        fromSession.img = userInfo.img
-        fromSession.messages = []
-        sessions.push(fromSession)
-      }
+        var fromSession
+        for (var i = 0; i < sessions.length; i++) {
+          if (sessions[i] && sessions[i].loginName === param.from) {
+            fromSession = sessions[i]
+          }
+        }
 
+        if (!fromSession) {
+          fromSession = {}
+          fromSession.loginName = param.from
+          fromSession.img = toUserInfo.img
+          fromSession.messages = []
+          sessions.push(fromSession)
+        }
 
-      var emitData = {
-        from: param.from,
-        to: param.to,
-        content: param.content,
-        date: now,
-        self: false
-      }
-      fromSession.messages.push(emitData)
-      param.img = userInfo.img
-      param.self = false
-      loginNameMapSocket[param.to].emit('sendMsg', emitData)
-      redisClient.hmset(param.to, 'sessions', JSON.stringify(sessions))
+        var emitData = {
+          from: param.from,
+          to: param.to,
+          content: param.content,
+          date: now,
+          self: false,
+          img : toUserInfo.img
+        }
+        fromSession.messages.push(emitData)
+        loginNameMapSocket[param.to].emit('sendMsg', emitData)
+        redisClient.hmset(param.to, 'sessions', JSON.stringify(sessions))
+      })
+
     })
-
     console.log('from ' + param.from + ',to ' + param.to + ' content:' + param.content)
   })
 
@@ -207,16 +202,16 @@ io.on('connection', function (socket) {
       if (loginNameMapSocket[loginName].id === socket.id) {
         delete loginNameMapSocket[loginName]
         disconnected = true
-        disconnectName= loginName
+        disconnectName = loginName
       }
     }
     redisClient.smembers('room', function (error, loginUsers) {
       if (error) throw error
-      for(var j = 0 ; j < loginUsers.length;j++){
+      for (var j = 0; j < loginUsers.length; j++) {
         var userStr = loginUsers[j]
         var userObj = JSON.parse(userStr)
-        if(userObj.loginName === disconnectName){
-          redisClient.srem('room',userStr)
+        if (userObj.loginName === disconnectName) {
+          redisClient.srem('room', userStr)
         }
       }
       io.emit('disconnect', loginName)
@@ -228,6 +223,6 @@ io.on('connection', function (socket) {
   })
 })
 
-http.listen(80, function () {
+http.listen(8080, function () {
   console.log('listening on *:80');
 });

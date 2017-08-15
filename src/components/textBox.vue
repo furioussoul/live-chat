@@ -1,5 +1,9 @@
 <script>
+  import {mapGetters} from 'vuex'
   export default {
+    computed: {
+      ...mapGetters(['currentToSession'])
+    },
     data(){
       return {
         content: ''
@@ -18,7 +22,11 @@
 
 <template>
   <div class="text">
-    <textarea placeholder="按 Enter 发送" v-model="content" @keyup="onKeyup"></textarea>
+    <textarea :disabled="!currentToSession.loginName"
+              placeholder="按 Enter 发送"
+              v-model="content"
+              @keyup="onKeyup">
+    </textarea>
   </div>
 </template>
 
