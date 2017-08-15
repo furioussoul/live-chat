@@ -6,6 +6,10 @@
   import loginPanel from './components/loginPanel.vue';
   import userListPanel from './components/userListPanel.vue';
   import {
+      flash_title
+  } from './js/notification'
+
+  import {
     mapGetters,
     mapActions
   } from 'vuex'
@@ -13,6 +17,9 @@
     components: {Card, List, TextBox, Message, loginPanel, userListPanel},
     computed: {
       ...mapGetters(['user'])
+    },
+    mounted(){
+      setInterval(flash_title, 1000); //2秒之后调用一次
     }
   }
 </script>
