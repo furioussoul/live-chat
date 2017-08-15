@@ -64,7 +64,7 @@ io.on('connection', function (socket) {
       }
       socket.emit('register', response.ok({
         user: user,
-        sessions: userInfo.sessions || []
+        sessions: []
       }))
       redisClient.smembers('room', function (error, loginUsers) {
         if (error) throw error
@@ -155,7 +155,6 @@ io.on('connection', function (socket) {
 
       param.img = userInfo.img
       param.self = true
-      loginNameMapSocket[param.from].emit('sendMsg', emitData)
       redisClient.hmset(param.from, 'sessions', JSON.stringify(sessions))
     })
 

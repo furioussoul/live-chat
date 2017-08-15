@@ -6,15 +6,18 @@
   export default{
     data(){
       return {
+        showLoginForm:true,
         user: {
           loginName: '',
-          password: ''
+          password: '',
+          confirmPassword: '',
+          registerCode:''
         }
       }
     },
     methods: {
-      ...mapActions(['login']),
-      denglu (e) {
+      ...mapActions(['login','register']),
+      denglu () {
         if (!this.user.loginName) {
           alert('用户名不能为空')
           return
@@ -24,6 +27,28 @@
           return
         }
         this.login(this.user);
+      },
+      zhuce(){
+        if (!this.user.loginName) {
+          alert('用户名不能为空')
+          return
+        }
+        if (!this.user.password) {
+          alert('密码不能为空')
+          return
+        }
+        if (!this.user.password) {
+          alert('确认密码不能为空')
+          return
+        }
+        if (this.user.password !== this.user.password) {
+          alert('两次输入密码不一致')
+          return
+        }
+        this.register(this.user);
+      },
+      toggleLogin(){
+          this.showLoginForm = !this.showLoginForm
       }
     },
     mounted(){
@@ -44,21 +69,54 @@
 <template>
   <div id="loginPanel">
     <div id="loginForm">
-      <p>
+      <div class="login" v-show="showLoginForm">
+        <p>
           <span class="soul-label">
           账号:
           </span>
-        <input class="soul-input" type="text" v-model="user.loginName"/>
-      </p>
-      <p>
+          <input class="soul-input" type="text" v-model="user.loginName"/>
+        </p>
+        <p>
           <span class="soul-label">
            密码:
           </span>
-        <input class="soul-input" type="text" v-model="user.password"/>
-      </p>
-      <p>
-        <button class="soul-button" @click="denglu">登录</button>
-      </p>
+          <input class="soul-input" type="text" v-model="user.password"/>
+        </p>
+        <p>
+          <a class="toggle" @click="toggleLogin">还没注册？</a>
+          <button class="soul-button" @click="denglu">登录</button>
+        </p>
+      </div>
+      <div class="register" v-show="!showLoginForm">
+        <p>
+          <span class="soul-label">
+          账号:
+          </span>
+          <input class="soul-input" type="text" v-model="user.loginName"/>
+        </p>
+        <p>
+          <span class="soul-label">
+           密码:
+          </span>
+          <input class="soul-input" type="text" v-model="user.password"/>
+        </p>
+        <p>
+          <span class="soul-label">
+           确认密码:
+          </span>
+          <input class="soul-input" type="text" v-model="user.confirmPassword"/>
+        </p>
+        <p>
+          <span class="soul-label">
+           注册秘钥:
+          </span>
+          <input class="soul-input" type="text" v-model="user.registerCode"/>
+        </p>
+        <p>
+          <a class="toggle" @click="toggleLogin">已经注册？</a>
+          <button class="soul-button" @click="zhuce">注册</button>
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -84,7 +142,6 @@
     color: #fff;
     background: rgb(25, 190, 170) none;
     border: 1px solid #19be6b;
-    display: block;
     &:hover {
       color: #fff;
       background: rgba(25, 190, 170, 0.8);
@@ -97,6 +154,13 @@
     top: 100px;
     left: 40px;
     width: 230px;
+  }
+
+  .toggle{
+    color: blue;
+    &:hover{
+      cursor: pointer;
+    }
   }
 
   .soul-label {
