@@ -10,7 +10,7 @@
     },
     methods: {
       ...mapMutations([
-          'changeCurrentToSession'
+          'changeSession'
       ])
     },
     filters:{
@@ -28,7 +28,7 @@
     <ul>
       <li v-for="(item, index) in sessions"
           :class="{ active: currentToSession.loginName ? item.loginName === currentToSession.loginName : index == 0}"
-          @click="changeCurrentToSession(item.loginName)">
+          @click="changeSession(item)">
         <img class="avatar" width="30" height="30" :alt="item.loginName" :src="item.img">
         <p class="name">{{item.loginName | truncateStr}}</p>
       </li>

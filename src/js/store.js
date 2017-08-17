@@ -41,7 +41,8 @@ const store = new Vuex.Store({
     }
   },
   mutations: {
-    addSession (state, currentToSession) {
+    //添加会话
+    changeSession (state, currentToSession) {
       var exitSession
       state.sessions.forEach(session => {
         if (session.loginName === currentToSession.loginName) {
@@ -49,22 +50,12 @@ const store = new Vuex.Store({
         }
       })
       if (exitSession) {
-        state.currentToSession = {
-          loginName: exitSession.loginName,
-          img: exitSession.img,
-          messages: exitSession.messages
-        }
+        //历史session包含要切换的session
+        state.currentToSession = exitSession
       } else {
-        state.currentToSession = {
-          loginName: currentToSession.loginName,
-          img: currentToSession.img,
-          messages: currentToSession.messages
-        }
+        state.currentToSession = currentToSession
         state.sessions.push(state.currentToSession)
       }
-    },
-    changeCurrentToSession (state, loginName) {
-      state.currentToSession = state.sessions.find(session => session.loginName === loginName)
     },
     setFilterKey: (state, value) => state.filterKey = value
   },
