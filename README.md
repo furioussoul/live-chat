@@ -18,5 +18,5 @@ prod模式 npm run build 然后启动server.js，访问localhost:8080
 
 ***
 # License
-MIT
-Copyright (c) 2017-present,  furioussoulk(SunZhengJie)
+(https://opensource.org/licenses/MIT "MIT")
+Copyright (c) 2017-present,  SunZhengJie(Furioussoulk)
