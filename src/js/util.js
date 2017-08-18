@@ -1,4 +1,5 @@
 import store from './store'
+import logger from './logger'
 
 function findSession(loginName) {
   var sessions = store.getters.sessions
@@ -18,7 +19,32 @@ function findUser(loginName) {
   }
 }
 
+function copyProperties(target, source) {
+  if(!target || !source){
+    return logger.error('target and source must not be null')
+  }
+  for(var key in source){
+    target[key] = source[key]
+  }
+}
+
+function cache(key, value) {
+  if (!value) {
+    var valueStr = window.localStorage.getItem(key)
+    return valueStr
+      ? JSON.stringify(valueStr)
+      : null
+  }
+
+  if (typeof value === 'object') {
+    value = JSON.stringify(value)
+  }
+  window.localStorage.setItem(key, value)
+}
+
 export {
   findSession,
-  findUser
+  findUser,
+  copyProperties,
+  cache
 }

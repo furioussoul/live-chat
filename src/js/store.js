@@ -4,8 +4,14 @@
  */
 import Vue from 'vue';
 import Vuex from 'vuex';
-import {ChatClient} from './client'
-import {findSession} from './util'
+import {
+  ChatClient
+} from './client'
+import {
+  findSession,
+  findUser,
+  copyProperties
+} from './util'
 Vue.use(Vuex);
 
 function connect(state) {
@@ -32,22 +38,33 @@ const store = new Vuex.Store({
     currentSession: ({sessions, currentSessionId}) => sessions.find(session => currentSessionId === session.id)
   },
   mutations: {
-    //选择聊天窗口
-    selectSession ({sessions, currentSession}, selectedSession) {
-      var exitSession = findSession(selectedSession.loginName)
+    initSessions(sessions){
+
+    },
+    //设置当前会话
+    setCurrentSession (state, session) {
+      var exitSession = findSession(session.loginName)
       if (exitSession) {
-        currentSession = exitSession
+        state.currentSession = exitSession
       } else {
-        currentSession = selectedSession
-        sessions.push(currentSession)
+        state.currentSession = session
+        state.sessions.push(session)
       }
     },
     //添加消息到当前窗口或者sessions
     addMsg(){
 
     },
-    addUser(){
-
+    //更新用户列表中用户的信息
+    refreshUser(state, user){
+      state.myLoginName = user.loginName
+      var oldUser
+      if ((oldUser = findUser(user.loginName))) {
+        //用户已经在用户列表,更新用户信息
+        return copyProperties(oldUser, user)
+      }
+      //将用户加入列表
+      state.users.push(user)
     },
     setFilterKey: (state, value) => state.filterKey = value
   },
