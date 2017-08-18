@@ -3,10 +3,10 @@
   import {mapMutations} from 'vuex'
   export default{
     computed: {
-      ...mapGetters(['userList'])
+      ...mapGetters(['users'])
     },
     methods: {
-      ...mapMutations(['changeSession'])
+      ...mapMutations(['selectSession'])
     }
   }
 </script>
@@ -14,9 +14,9 @@
   <div>
     当前登录用户
     <ul>
-        <li v-for="item in userList">
+        <li v-for="item in users">
         <img style="width: 20px;height: 20px;display: inline-block;vertical-align: middle" :src="item.img"/>
-        <a @click="changeSession(item)" href="#">{{item.loginName}}</a>
+        <a @click="selectSession(item)" href="#">{{item.loginName}}</a>
       </li>
     </ul>
   </div>

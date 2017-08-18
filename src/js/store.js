@@ -5,7 +5,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import {ChatClient} from './client'
-
+import {findSession} from './util'
 Vue.use(Vuex);
 
 function connect(state) {
@@ -17,44 +17,35 @@ function connect(state) {
 
 const store = new Vuex.Store({
   state: {
-    client: null,//socket client
-    user: null, // 当前用户
-    userList: null,
+    client: null,//socket 客户端
+    users: null,//用户列表
+    myId: '', // 我的id（登录人id）
     sessions: [],// 会话列表
-    currentSession: {
-      loginName: '',
-      img: '',
-      messages: []
-    }, // 当前选中的对方的会话
-    filterKey: '' //过滤会话列表
+    currentSessionId: '',//当前聊天窗口id
+    filterKey: '' //搜索用户的所搜词
   },
   getters: {
     client: (state) => state.client,
-    user: (state) => state.user,
-    userList: (state) => state.userList,
-    currentSession: (state) => state.currentSession,
+    users: ({users}) => users,
+    me: ({users, myId}) => users.find(user => myId === user.id),
     sessions({sessions, filterKey}){
       if (!filterKey) {
         return sessions
       }
       return sessions.filter(session => session.loginName.toUpperCase().includes(filterKey.toUpperCase()))
-    }
+    },
+    currentSession: ({sessions,currentSessionId}) => sessions.find(session => currentSessionId === session.id)
   },
   mutations: {
-    //改变当前会话
-    changeSession (state, currentToSession) {
-      var exitSession
-      state.sessions.forEach(session => {
-        if (session.loginName === currentToSession.loginName) {
-          exitSession = session
-        }
-      })
+    //选择聊天窗口
+    selectSession ({sessions,currentSession}, selectedSession) {
+      var exitSession = findSession(selectedSession.loginName)
       if (exitSession) {
         //历史session包含要切换的session
-        state.currentSession = exitSession
+        currentSession = exitSession
       } else {
-        state.currentSession = currentToSession
-        state.sessions.push(state.currentSession)
+        currentSession = selectedSession
+        sessions.push(currentSession)
       }
     },
     setFilterKey: (state, value) => state.filterKey = value

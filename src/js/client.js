@@ -34,48 +34,40 @@ function registerEvent() {
 
   this.socket.on("register", cb)
   this.socket.on("login", cb)
-  this.socket.on('receiveMsg', function (param) {//todo 改名-》getMsg
+  this.socket.on('receiveMsg', function (param) {
     var exitSession,
       sessions = store.state.sessions,
       currentSession = store.state.currentSession
 
-    flashInfo.flash = true
+    flashInfo.flash = true//dom title显示【新消息】
 
-    if (!(exitSession = findSession(sessions, param.from))) {
-      //要想绑定内部属性必须复制一个对象
-      var session = {
+    //当前聊天窗口的聊天对象是消息发送者
+    if (currentSession.loginName === param.from) {
+      //消息加入当前对话窗口
+      currentSession.messages.push(param)
+      if (!exitSession.messages) {
+        exitSession.messages = []
+      }
+      exitSession.messages.push(param)
+    }
+
+    //聊天记录里面没有from的session
+    if (!(exitSession = findSession(param.from))) {
+      //新建from的session
+      exitSession = {
         loginName: param.from,
         messages: [param],
         img: param.img
       }
-      sessions.push(session)
-      currentSession = session
-    } else {
-      var messages = []
-      if (currentSession.loginName === param.from) {
-        //接收消息的来源是当前窗口的发送者
-        if (currentSession.messages) {
-          currentSession.messages.forEach(msg => {
-            messages.push(msg)
-          })
-        }
-        messages.push(param)
-        var session = {
-          loginName: currentSession.loginName,
-          img: currentSession.img,
-          messages: messages
-        }
-        //要想绑定内部属性必须复制一个对象
-        currentSession = session
-        if (!exitSession.messages) {
-          exitSession.messages = []
-        }
-        exitSession.messages.push(param)
-      }
+      sessions.push(exitSession)
+      currentSession = exitSession
+    }else {
+      //from的session加入消息
+      exitSession.messages.push(param)
     }
   })
   this.socket.on('disconnect', function (loginName) {
-    store.state.userList = store.state.userList.filter(item => item.loginName !== loginName)
+    store.state.users = store.state.users.filter(item => item.loginName !== loginName)
   })
 
   this.socket.on('receiveOnlineUsers', function (onlineUsers) {
@@ -83,7 +75,7 @@ function registerEvent() {
     onlineUsers.forEach(user => {
       userList.push(JSON.parse(user)) //todo mvc 自动序列化
     })
-    store.state.userList = userList.filter(item => item.loginName !== store.state.user.loginName)
+    store.state.users = userList.filter(item => item.loginName !== store.state.user.loginName)
   })
 }
 
