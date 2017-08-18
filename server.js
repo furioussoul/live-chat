@@ -4,7 +4,7 @@ var express = require('express'),
   http = require('http').Server(app),
   io = require('socket.io')(http),
   redis = require("redis"),
-  redisClient = redis.createClient('6333', '47.94.2.0')
+  redisClient = redis.createClient('6334', '47.94.2.0')//测试redis
 
 process.on('uncaughtException', function (err) {
   console.error('An uncaught error occurred!');
@@ -183,7 +183,8 @@ io.on('connection', function (socket) {
           content: param.content,
           date: now,
           self: false,
-          img : toUserInfo.img
+          img : toUserInfo.img,
+          messages:[]
         }
         fromSession.messages.push(emitData)
         loginNameMapSocket[param.to].emit('receiveMsg', emitData)

@@ -2,7 +2,7 @@
   import {mapGetters} from 'vuex'
   export default {
     computed: {
-      ...mapGetters(['user', 'currentSession','users'])
+      ...mapGetters(['me', 'currentSession','users'])
     },
     filters: {
       // 将日期过滤为 hour:minutes
@@ -32,7 +32,7 @@
           <span>{{ item.date | time}}</span>
         </p>
         <div class="main" :class="{ self: item.self }">
-          <img class="avatar" width="30" height="30" :src="item.self ? user.img : currentSession.img"/>
+          <img class="avatar" width="30" height="30" :src="item.self ? me.img : currentSession.img"/>
           <div class="text">{{ item.content }}</div>
         </div>
       </li>

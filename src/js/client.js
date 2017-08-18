@@ -18,7 +18,7 @@ function cacheLocal(key, value) {
 function registerEvent() {
   function cb({code, rMsg, rData}) {
     if (code === 1) {
-      store.state.user = rData.user
+      store.commit('addUser',rData.user)
       store.state.sessions = rData.sessions
       if (rData.sessions && rData.sessions[0]) {
         store.state.currentSession = rData.sessions[0]
@@ -70,7 +70,7 @@ function registerEvent() {
     onlineUsers.forEach(user => {
       userList.push(JSON.parse(user)) //todo mvc 自动序列化
     })
-    store.state.users = userList.filter(item => item.loginName !== store.state.user.loginName)
+    store.state.users = userList.filter(item => item.loginName !== store.state.myLoginName)
   })
 }
 

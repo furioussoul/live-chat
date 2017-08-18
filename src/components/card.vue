@@ -3,7 +3,7 @@
   export default {
     computed: {
       ...mapGetters([
-        'user'
+        'me'
       ])
     },
     methods: {
@@ -18,8 +18,8 @@
 <template>
   <div class="card">
     <header>
-      <img class="avatar" width="40" height="40" :alt="user.name" :src="user.img">
-      <p class="name">{{user.name}}</p>
+      <img class="avatar" width="40" height="40" :alt="me.name" :src="me.img">
+      <p class="name">{{me.name}}</p>
     </header>
     <footer>
       <input class="search" type="text" placeholder="search user..." @keyup="onKeyup">
