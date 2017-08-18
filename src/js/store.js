@@ -33,6 +33,7 @@ const store = new Vuex.Store({
   getters: {
     client: ({client}) => client,
     users: ({users}) => users,
+    myLoginName: ({myLoginName}) => myLoginName,
     me: ({users, myLoginName}) => users.find(user => myLoginName === user.loginName),
     sessions: ({sessions, filterKey}) => sessions.filter(session => !filterKey || session.loginName.toUpperCase().includes(filterKey.toUpperCase())),
     currentSession: ({sessions, currentSessionId}) => sessions.find(session => currentSessionId === session.id)
@@ -58,34 +59,31 @@ const store = new Vuex.Store({
         sessions = state.sessions,
         currentSession = state.currentSession
 
-      //当前聊天窗口的聊天对象是消息发送者
+      //更新当前会话的消息
       if (currentSession.loginName === message.from) {
-        //消息加入当前对话窗口
+        //当前聊天窗口的聊天对象是消息发送者
         currentSession.messages.push(message)
-        if (!exitSession.messages) {
-          exitSession.messages = []
-        }
-        exitSession.messages.push(message)
       }
 
-      //聊天记录里面没有from的session
-      if (!(exitSession = findSession(message.from))) {
-        //新建from的session
+      //更新历史会话的消息
+      if (exitSession = findSession(message.from)) {
+        //聊天记录里面有from的session
+        //from的session加入消息
+        exitSession.messages.push(message)
+      } else {
         exitSession = {
           loginName: message.from,
           messages: [message],
           img: message.img
         }
+        //插入新建from的session
         sessions.push(exitSession)
-        currentSession = exitSession
-      }else {
-        //from的session加入消息
-        exitSession.messages.push(message)
+        state.currentSession = exitSession
       }
     },
     //初始化用户列表
-    initUsers(state, sessions){
-      state.sessions = sessions
+    initUsers(state, users){
+      state.users = users
     },
     //更新用户列表中用户的信息
     refreshUser(state, user){
