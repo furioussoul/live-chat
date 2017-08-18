@@ -45,8 +45,8 @@ function onRegister(credential) {
   if (credential.registerCode !== 'xjbmy') {
     return void socketServer.emit('register', response.fail('验证秘钥失败'))
   }
-  redisClient.hgetall(param.loginName, function (err, userInfo) {
-    if (err) throw(err)
+  redisClient.hgetall(param.loginName, function (error, userInfo) {
+    if (error) throw(error)
     if (userInfo) {
       return void socketServer.emit('register', response.fail('用户名已被注册'))
     }
@@ -80,46 +80,46 @@ function onRegister(credential) {
   })
 }
 
-io.on('connection', function (socket) {
-  socketServer = socket
-  socketServer.on('register', onRegister)
-
-  socketServer.on('login', function (param) {
+function onLogin(credential) {
     //获取用户信息,聊天记录
-    redisClient.hgetall(param.loginName, function (err, userInfo) {
+    redisClient.hgetall(credential.loginName, function (err, userInfo) {
       if (err) throw(err)
-      if (!userInfo || userInfo.password !== param.password) {
-        return void socket.emit('login', response.fail('用户名密码错误'))
+      if (!userInfo || userInfo.password !== credential.password) {
+        return void socketServer.emit('login', response.fail('用户名密码错误'))
       }
 
       redisClient.smembers('room', function (error, loginUsers) {
         if (error) throw error
 
         for (var i = 0; i < loginUsers.length; i++) {
-          if (JSON.parse(loginUsers[i]).loginName === param.loginName) {
-            loginNameMapSocket[param.loginName].emit('kickOff', response.ok('你的账号在别处被登录了'))
-            loginNameMapSocket[param.loginName].disconnect()
+          if (JSON.parse(loginUsers[i]).loginName === credential.loginName) {//该账号已经登陆了
+            loginNameMapSocket[credential.loginName].emit('kickOff', response.ok('你的账号在别处被登录了'))
+            loginNameMapSocket[credential.loginName].disconnect()
           }
         }
-        loginNameMapSocket[param.loginName] = socket
+        loginNameMapSocket[credential.loginName] = socketServer
 
         var user = {
           loginName: userInfo.loginName,
           name: userInfo.nickName || userInfo.loginName,
-          img: userInfo.img
-        }
-        socket.emit('login', response.ok({
-          user: user,
+          img: userInfo.img,
           sessions: userInfo.sessions
             ? JSON.parse(userInfo.sessions)
             : []
-        }))
+        }
+        socketServer.emit('login', response.ok(user))
         loginUsers.push(JSON.stringify(user))
         io.emit('receiveUsers', loginUsers)
         redisClient.sadd('room', JSON.stringify(user))
       })
     })
-  })
+}
+
+io.on('connection', function (socket) {
+  socketServer = socket
+  socketServer.on('register', onRegister)
+
+  socketServer.on('login')
 
   socketServer.on('sendMsg', function (param) {
 
