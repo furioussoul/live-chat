@@ -38,8 +38,9 @@ const store = new Vuex.Store({
     currentSession: ({sessions, currentSessionId}) => sessions.find(session => currentSessionId === session.id)
   },
   mutations: {
-    initSessions(sessions){
-
+    //初始化会话记录
+    initSessions(state, sessions){
+      state.sessions = sessions
     },
     //设置当前会话
     setCurrentSession (state, session) {
@@ -52,8 +53,39 @@ const store = new Vuex.Store({
       }
     },
     //添加消息到当前窗口或者sessions
-    addMsg(){
+    addMsg(state, message){
+      var exitSession,
+        sessions = state.sessions,
+        currentSession = state.currentSession
 
+      //当前聊天窗口的聊天对象是消息发送者
+      if (currentSession.loginName === message.from) {
+        //消息加入当前对话窗口
+        currentSession.messages.push(message)
+        if (!exitSession.messages) {
+          exitSession.messages = []
+        }
+        exitSession.messages.push(message)
+      }
+
+      //聊天记录里面没有from的session
+      if (!(exitSession = findSession(message.from))) {
+        //新建from的session
+        exitSession = {
+          loginName: message.from,
+          messages: [message],
+          img: message.img
+        }
+        sessions.push(exitSession)
+        currentSession = exitSession
+      }else {
+        //from的session加入消息
+        exitSession.messages.push(message)
+      }
+    },
+    //初始化用户列表
+    initUsers(state, sessions){
+      state.sessions = sessions
     },
     //更新用户列表中用户的信息
     refreshUser(state, user){
