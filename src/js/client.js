@@ -1,8 +1,5 @@
 import store from './store'
 import {
-  flashInfo
-} from './notification'
-import {
   findSession
 } from './util'
 
@@ -38,8 +35,6 @@ function registerEvent() {
     var exitSession,
       sessions = store.state.sessions,
       currentSession = store.state.currentSession
-
-    flashInfo.flash = true//dom title显示【新消息】
 
     //当前聊天窗口的聊天对象是消息发送者
     if (currentSession.loginName === param.from) {

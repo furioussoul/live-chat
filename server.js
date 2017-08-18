@@ -96,7 +96,6 @@ io.on('connection', function (socket) {
 
         var user = {
           loginName: userInfo.loginName,
-          password: userInfo.password,//todo加密
           name: userInfo.nickName || userInfo.loginName,
           img: userInfo.img
         }
