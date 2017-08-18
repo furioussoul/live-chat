@@ -2,8 +2,8 @@ import store from './store'
 import logger from './logger'
 
 function findSession(loginName) {
-  var sessions = store.getters.sessions
-  for(var i = 0;i<sessions.length;i++){
+  let sessions = store.getters.sessions
+  for(let i = 0;i<sessions.length;i++){
     if (sessions[i].loginName === loginName) {
       return sessions[i]
     }
@@ -11,8 +11,8 @@ function findSession(loginName) {
 }
 
 function findUser(loginName) {
-  var users = store.getters.users
-  for(var i = 0;i<users.length;i++){
+  let users = store.getters.users
+  for(let i = 0;i<users.length;i++){
     if (users[i].loginName === loginName) {
       return users[i]
     }
@@ -23,14 +23,14 @@ function copyProperties(target, source) {
   if(!target || !source){
     return logger.error('target and source must not be null')
   }
-  for(var key in source){
+  for(let key in source){
     target[key] = source[key]
   }
 }
 
 function cache(key, value) {
   if (!value) {
-    var valueStr = window.localStorage.getItem(key)
+    let valueStr = window.localStorage.getItem(key)
     return valueStr
       ? JSON.stringify(valueStr)
       : null
