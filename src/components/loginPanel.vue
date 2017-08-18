@@ -3,6 +3,9 @@
     mapGetters,
     mapActions
   } from 'vuex'
+  import{
+    cache
+  }from '../js/util'
   export default{
     data(){
       return {
@@ -52,16 +55,16 @@
       }
     },
     mounted(){
-      var identifier = window.localStorage.getItem('live-chat');
-      if (!identifier) {
+      var credential = cache('credential');
+      if (!credential) {
         return
       }
-      identifier = JSON.parse(identifier)
-      if (identifier.autoLogin) {
-        this.$store.dispatch('login', identifier)
+      credential = JSON.parse(credential)
+      if (credential.autoLogin) {
+        this.$store.dispatch('login', credential)
       } else {
-        this.user.loginName = identifier.loginName
-        this.user.password = identifier.password
+        this.user.loginName = credential.loginName
+        this.user.password = credential.password
       }
     }
   }

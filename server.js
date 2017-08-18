@@ -4,7 +4,8 @@ var express = require('express'),
   http = require('http').Server(app),
   io = require('socket.io')(http),
   redis = require("redis"),
-  redisClient = redis.createClient('6334', '47.94.2.0')//测试redis
+  redisClient = redis.createClient('6334', '47.94.2.0'),//测试redis
+  socketServer
 
 process.on('uncaughtException', function (err) {
   console.error('An uncaught error occurred!');
@@ -40,42 +41,50 @@ var response = {
   }
 }
 
-io.on('connection', function (socket) {
-  socket.on('register', function (param) {
-    if (param.registerCode !== 'xjbmy') {
-      return void socket.emit('register', response.fail('验证秘钥失败'))
+function onRegister(credential) {
+  if (credential.registerCode !== 'xjbmy') {
+    return void socketServer.emit('register', response.fail('验证秘钥失败'))
+  }
+  redisClient.hgetall(param.loginName, function (err, userInfo) {
+    if (err) throw(err)
+    if (userInfo) {
+      return void socketServer.emit('register', response.fail('用户名已被注册'))
     }
-    redisClient.hgetall(param.loginName, function (err, userInfo) {
-      if (err) throw(err)
-      if (userInfo) {
-        return void socket.emit('register', response.fail('用户名已被注册'))
-      }
 
-      param.createTime = new Date()
-      param.img = '/static/images/2.png' //默认头像
-      redisClient.hmset(param.loginName, param)//注册入库
-      loginNameMapSocket[param.loginName] = socket
+    if(!credential.img) {
+      credential.img = '/static/images/2.png' //默认头像
+    }
+    credential.createTime = new Date()
 
-      var user = {
-        loginName: param.loginName,
-        password: param.password,//todo加密
-        name: param.loginName,
-        img: param.img
-      }
-      socket.emit('register', response.ok({
-        user: user,
-        sessions: []
-      }))
-      redisClient.smembers('room', function (error, loginUsers) {
-        if (error) throw error
-        loginUsers.push(JSON.stringify(user))
-        io.emit('receiveOnlineUsers', loginUsers)
-        redisClient.sadd('room', JSON.stringify(user))
-      })
+    redisClient.hmset(param.loginName, credential)//注册入库
+
+    loginNameMapSocket[param.loginName] = socketServer//缓存socket
+
+    var user = {
+      loginName: param.loginName,
+      name: param.loginName,
+      img: param.img,
+      sessions: []
+    }
+
+    socketServer.emit('register', response.ok(user))//通知前段注册成功
+
+    //查询在线用户
+    redisClient.smembers('room', function (error, loginUsers) {
+      if (error) throw error
+
+      loginUsers.push(JSON.stringify(user))
+      io.emit('receiveUsers', loginUsers)//广播在线用户
+      redisClient.sadd('room', JSON.stringify(user))//在线用户入库
     })
   })
+}
 
-  socket.on('login', function (param) {
+io.on('connection', function (socket) {
+  socketServer = socket
+  socketServer.on('register', onRegister)
+
+  socketServer.on('login', function (param) {
     //获取用户信息,聊天记录
     redisClient.hgetall(param.loginName, function (err, userInfo) {
       if (err) throw(err)
@@ -88,10 +97,10 @@ io.on('connection', function (socket) {
 
         for (var i = 0; i < loginUsers.length; i++) {
           if (JSON.parse(loginUsers[i]).loginName === param.loginName) {
-            return void socket.emit('login', response.fail('你的账号在别处被登录了'))//别处登录了 todo 踢掉
+            loginNameMapSocket[param.loginName].emit('kickOff', response.ok('你的账号在别处被登录了'))
+            loginNameMapSocket[param.loginName].disconnect()
           }
         }
-        redisClient.hmset(param.loginName, 'loginTime', new Date())//更新登录时间
         loginNameMapSocket[param.loginName] = socket
 
         var user = {
@@ -106,13 +115,13 @@ io.on('connection', function (socket) {
             : []
         }))
         loginUsers.push(JSON.stringify(user))
-        io.emit('receiveOnlineUsers', loginUsers)
+        io.emit('receiveUsers', loginUsers)
         redisClient.sadd('room', JSON.stringify(user))
       })
     })
   })
 
-  socket.on('sendMsg', function (param) {
+  socketServer.on('sendMsg', function (param) {
 
     var sessions,
       messages,
@@ -183,8 +192,8 @@ io.on('connection', function (socket) {
           content: param.content,
           date: now,
           self: false,
-          img : toUserInfo.img,
-          messages:[]
+          img: toUserInfo.img,
+          messages: []
         }
         fromSession.messages.push(emitData)
         loginNameMapSocket[param.to].emit('receiveMsg', emitData)

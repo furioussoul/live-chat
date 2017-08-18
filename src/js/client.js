@@ -1,29 +1,16 @@
 import store from './store'
 import {
-  findSession
+  findSession,
+  cache
 } from './util'
 
-//保存登录信息到localstorage
-function cacheLocal(key, value) {
-  if (!value) {
-    return window.localStorage.getItem(key)
-  }
-
-  if (typeof value === 'object') {
-    value = JSON.stringify(value)
-  }
-  window.localStorage.setItem(key, value)
-}
 //注册事件
 function registerEvent() {
   function cb({code, rMsg, rData}) {
     if (code === 1) {
-      store.commit('addUser',rData.user)
-      store.state.sessions = rData.sessions
-      if (rData.sessions && rData.sessions[0]) {
-        store.state.currentSession = rData.sessions[0]
-      }
-      cacheLocal('live-chat', rData.user)
+      store.commit('refreshUser',rData.user)
+      store.commit('initSessions',rData.user.sessions)
+      cache('credential', rData.user)
     } else {
       alert(rMsg)
     }
@@ -65,7 +52,7 @@ function registerEvent() {
     store.state.users = store.state.users.filter(item => item.loginName !== loginName)
   })
 
-  this.socket.on('receiveOnlineUsers', function (onlineUsers) {
+  this.socket.on('receiveUsers', function (onlineUsers) {
     var userList = []
     onlineUsers.forEach(user => {
       userList.push(JSON.parse(user)) //todo mvc 自动序列化
