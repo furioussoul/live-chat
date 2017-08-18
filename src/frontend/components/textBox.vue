@@ -22,7 +22,7 @@
 
 <template>
   <div class="text">
-    <textarea :disabled="!currentSession.loginName"
+    <textarea :disabled="!currentSession"
               placeholder="按 Enter 发送"
               v-model="content"
               @keyup="onKeyup">

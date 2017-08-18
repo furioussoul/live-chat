@@ -1,9 +1,12 @@
 import store from './store'
-import logger from './logger'
+import {
+  info,
+  error
+} from './logger'
 
 function findSession(loginName) {
   let sessions = store.getters.sessions
-  for(let i = 0;i<sessions.length;i++){
+  for (let i = 0; i < sessions.length; i++) {
     if (sessions[i].loginName === loginName) {
       return sessions[i]
     }
@@ -12,7 +15,7 @@ function findSession(loginName) {
 
 function findUser(loginName) {
   let users = store.getters.users
-  for(let i = 0;i<users.length;i++){
+  for (let i = 0; i < users.length; i++) {
     if (users[i].loginName === loginName) {
       return users[i]
     }
@@ -20,10 +23,10 @@ function findUser(loginName) {
 }
 
 function copyProperties(target, source) {
-  if(!target || !source){
-    return logger.error('target and source must not be null')
+  if (!target || !source) {
+    return error('target and source must not be null')
   }
-  for(let key in source){
+  for (let key in source) {
     target[key] = source[key]
   }
 }
@@ -42,9 +45,23 @@ function cache(key, value) {
   window.localStorage.setItem(key, value)
 }
 
+let response = {
+  ok: function (data) {
+    this.code = 1
+    this.rData = data
+    return this
+  },
+  fail: function (msg) {
+    this.code = 0
+    this.rMsg = msg
+    return this
+  }
+}
+
 export {
   findSession,
   findUser,
   copyProperties,
-  cache
+  cache,
+  response
 }

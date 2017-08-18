@@ -52,9 +52,9 @@ export function ChatClient({host, port}) {
 
 function callBack({code, rMsg, rData}) {
   if (code === 1) {
-    store.commit('refreshUser', rData.user)
-    store.commit('initSessions', rData.user.sessions)
-    cache('credential', rData.user)
+    store.commit('refreshUser', rData)
+    store.commit('initSessions', rData.sessions)
+    cache('credential', rData)
   } else {
     alert(rMsg)
   }
