@@ -2,6 +2,9 @@ import store from './store'
 import {
   flashInfo
 } from './notification'
+import {
+  findSession
+} from './util'
 
 //保存登录信息到localstorage
 function cacheLocal(key, value) {
@@ -21,7 +24,7 @@ function registerEvent() {
       store.state.user = rData.user
       store.state.sessions = rData.sessions
       if (rData.sessions && rData.sessions[0]) {
-        store.state.currentToSession = rData.sessions[0]
+        store.state.currentSession = rData.sessions[0]
       }
       cacheLocal('live-chat', rData.user)
     } else {
@@ -31,41 +34,39 @@ function registerEvent() {
 
   this.socket.on("register", cb)
   this.socket.on("login", cb)
-  this.socket.on('sendMsg', function (param) {//todo 改名-》getMsg
-    flashInfo.flash = true
-    var exitSession
-    store.state.sessions.forEach(session => {
-      if (session.loginName === param.from) {
-        exitSession = session
-      }
-    })
+  this.socket.on('receiveMsg', function (param) {//todo 改名-》getMsg
+    var exitSession,
+      sessions = store.state.sessions,
+      currentSession = store.state.currentSession
 
-    if (!exitSession) {
+    flashInfo.flash = true
+
+    if (!(exitSession = findSession(sessions, param.from))) {
       //要想绑定内部属性必须复制一个对象
       var session = {
         loginName: param.from,
         messages: [param],
         img: param.img
       }
-      store.state.sessions.push(session)
-      store.state.currentToSession = session
+      sessions.push(session)
+      currentSession = session
     } else {
       var messages = []
-      if(store.state.currentToSession.loginName === param.from){
+      if (currentSession.loginName === param.from) {
         //接收消息的来源是当前窗口的发送者
-        if (store.state.currentToSession.messages) {
-          store.state.currentToSession.messages.forEach(msg => {
+        if (currentSession.messages) {
+          currentSession.messages.forEach(msg => {
             messages.push(msg)
           })
         }
         messages.push(param)
         var session = {
-          loginName: store.state.currentToSession.loginName,
-          img: store.state.currentToSession.img,
+          loginName: currentSession.loginName,
+          img: currentSession.img,
           messages: messages
         }
         //要想绑定内部属性必须复制一个对象
-        store.state.currentToSession = session
+        currentSession = session
         if (!exitSession.messages) {
           exitSession.messages = []
         }
@@ -77,10 +78,10 @@ function registerEvent() {
     store.state.userList = store.state.userList.filter(item => item.loginName !== loginName)
   })
 
-  this.socket.on('getUserList', function (list) {
+  this.socket.on('receiveOnlineUsers', function (onlineUsers) {
     var userList = []
-    list.forEach(user => {
-      userList.push(JSON.parse(user))
+    onlineUsers.forEach(user => {
+      userList.push(JSON.parse(user)) //todo mvc 自动序列化
     })
     store.state.userList = userList.filter(item => item.loginName !== store.state.user.loginName)
   })

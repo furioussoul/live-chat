@@ -2,7 +2,7 @@
   import {mapGetters} from 'vuex'
   export default {
     computed: {
-      ...mapGetters(['user', 'currentToSession','userList'])
+      ...mapGetters(['user', 'currentSession','userList'])
     },
     filters: {
       // 将日期过滤为 hour:minutes
@@ -26,13 +26,13 @@
 
 <template>
   <div class="message" v-scroll-bottom>
-    <ul v-if="currentToSession">
-      <li v-for="item in currentToSession.messages">
+    <ul v-if="currentSession">
+      <li v-for="item in currentSession.messages">
         <p class="time">
           <span>{{ item.date | time}}</span>
         </p>
         <div class="main" :class="{ self: item.self }">
-          <img class="avatar" width="30" height="30" :src="item.self ? user.img : currentToSession.img"/>
+          <img class="avatar" width="30" height="30" :src="item.self ? user.img : currentSession.img"/>
           <div class="text">{{ item.content }}</div>
         </div>
       </li>

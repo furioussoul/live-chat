@@ -69,7 +69,7 @@ io.on('connection', function (socket) {
       redisClient.smembers('room', function (error, loginUsers) {
         if (error) throw error
         loginUsers.push(JSON.stringify(user))
-        io.emit('getUserList', loginUsers)
+        io.emit('receiveOnlineUsers', loginUsers)
         redisClient.sadd('room', JSON.stringify(user))
       })
     })
@@ -107,7 +107,7 @@ io.on('connection', function (socket) {
             : []
         }))
         loginUsers.push(JSON.stringify(user))
-        io.emit('getUserList', loginUsers)
+        io.emit('receiveOnlineUsers', loginUsers)
         redisClient.sadd('room', JSON.stringify(user))
       })
     })
@@ -187,7 +187,7 @@ io.on('connection', function (socket) {
           img : toUserInfo.img
         }
         fromSession.messages.push(emitData)
-        loginNameMapSocket[param.to].emit('sendMsg', emitData)
+        loginNameMapSocket[param.to].emit('receiveMsg', emitData)
         redisClient.hmset(param.to, 'sessions', JSON.stringify(sessions))
       })
 
@@ -223,6 +223,6 @@ io.on('connection', function (socket) {
   })
 })
 
-http.listen(80, function () {
+http.listen(8080, function () {
   console.log('listening on *:80');
 });
