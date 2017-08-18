@@ -7,42 +7,68 @@ var express = require('express'),
   redisClient = redis.createClient('6334', '47.94.2.0'),//测试redis
   socketServer
 
+//捕获node进程异常
 process.on('uncaughtException', function (err) {
   console.error('An uncaught error occurred!');
   console.error(err.stack);
 });
 
+//捕获redis异常
 redisClient.on("error", function (err) {
   console.log("Error " + err);
 });
 
+//express配置
 app.use(cookie())
 app.use('/static', express.static(__dirname + '/dist/static'))
-
 app.get('/', function (req, res) {
   res.sendFile(__dirname + '/dist/index.html');
 });
 
-var dataSource = {},
-  loginNameMapSocket = {}, //上线注册列表
-  nameMapName = {}, //服务端记录用户映射，可应对权群聊
+//socket连接，注册事件
+io.on('connection',onConnect)
+
+var loginNameMapSocket = {}, //上线注册列表
   registerCode = 'xjbmy' //注册秘钥
 
-var response = {
-  ok: function (data) {
-    this.code = 1
-    this.rData = data
-    return this
-  },
-  fail: function (msg) {
-    this.code = 0
-    this.rMsg = msg
-    return this
+function onConnect(socket) {
+  socketServer = socket
+  socketServer.on('register', onRegister)
+  socketServer.on('login', onLogin)
+  socketServer.on('sendMsg', onSendMsg)
+  socketServer.on('disconnect', onDisconnected)
+}
+
+function onDisconnected() {
+  var disconnected = false,
+    disconnectName
+  for (var loginName in loginNameMapSocket) {
+    if (loginNameMapSocket[loginName].id === socketServer.id) {
+      delete loginNameMapSocket[loginName]
+      disconnected = true
+      disconnectName = loginName
+      break
+    }
+  }
+  redisClient.smembers('room', function (error, loginUsers) {
+    if (error) throw error
+    for (var j = 0; j < loginUsers.length; j++) {
+      var userStr = loginUsers[j]
+      var userObj = JSON.parse(userStr)
+      if (userObj.loginName === disconnectName) {
+        redisClient.srem('room', userStr)
+      }
+    }
+    io.emit('disconnect', loginName)
+    console.log(loginName + " disconnected")
+  })
+  if (!disconnected) {
+    console.log("disconnect cant find socketId")
   }
 }
 
 function onRegister(credential) {
-  if (credential.registerCode !== 'xjbmy') {
+  if (credential.registerCode !== registerCode) {
     return void socketServer.emit('register', response.fail('验证秘钥失败'))
   }
   redisClient.hgetall(param.loginName, function (error, userInfo) {
@@ -51,7 +77,7 @@ function onRegister(credential) {
       return void socketServer.emit('register', response.fail('用户名已被注册'))
     }
 
-    if(!credential.img) {
+    if (!credential.img) {
       credential.img = '/static/images/2.png' //默认头像
     }
     credential.createTime = new Date()
@@ -81,157 +107,127 @@ function onRegister(credential) {
 }
 
 function onLogin(credential) {
-    //获取用户信息,聊天记录
-    redisClient.hgetall(credential.loginName, function (err, userInfo) {
-      if (err) throw(err)
-      if (!userInfo || userInfo.password !== credential.password) {
-        return void socketServer.emit('login', response.fail('用户名密码错误'))
+  //获取用户信息,聊天记录
+  redisClient.hgetall(credential.loginName, function (err, userInfo) {
+    if (err) throw(err)
+    if (!userInfo || userInfo.password !== credential.password) {
+      return void socketServer.emit('login', response.fail('用户名密码错误'))
+    }
+
+    redisClient.smembers('room', function (error, loginUsers) {
+      if (error) throw error
+
+      for (var i = 0; i < loginUsers.length; i++) {
+        if (JSON.parse(loginUsers[i]).loginName === credential.loginName) {//该账号已经登陆了
+          loginNameMapSocket[credential.loginName].emit('kickOff', response.ok('你的账号在别处被登录了'))
+          loginNameMapSocket[credential.loginName].disconnect()
+        }
       }
+      loginNameMapSocket[credential.loginName] = socketServer
 
-      redisClient.smembers('room', function (error, loginUsers) {
-        if (error) throw error
-
-        for (var i = 0; i < loginUsers.length; i++) {
-          if (JSON.parse(loginUsers[i]).loginName === credential.loginName) {//该账号已经登陆了
-            loginNameMapSocket[credential.loginName].emit('kickOff', response.ok('你的账号在别处被登录了'))
-            loginNameMapSocket[credential.loginName].disconnect()
-          }
-        }
-        loginNameMapSocket[credential.loginName] = socketServer
-
-        var user = {
-          loginName: userInfo.loginName,
-          name: userInfo.nickName || userInfo.loginName,
-          img: userInfo.img,
-          sessions: userInfo.sessions
-            ? JSON.parse(userInfo.sessions)
-            : []
-        }
-        socketServer.emit('login', response.ok(user))
-        loginUsers.push(JSON.stringify(user))
-        io.emit('receiveUsers', loginUsers)
-        redisClient.sadd('room', JSON.stringify(user))
-      })
+      var user = {
+        loginName: userInfo.loginName,
+        name: userInfo.nickName || userInfo.loginName,
+        img: userInfo.img,
+        sessions: JSON.parse(userInfo.sessions)
+      }
+      socketServer.emit('login', response.ok(user))
+      loginUsers.push(JSON.stringify(user))
+      io.emit('receiveUsers', loginUsers)
+      redisClient.sadd('room', JSON.stringify(user))
     })
+  })
 }
 
-io.on('connection', function (socket) {
-  socketServer = socket
-  socketServer.on('register', onRegister)
+function onSendMsg(message) {
+  //把消息保存到message.from这个用户下
+  redisClient.hgetall(message.from, function (error, fromUserInfo) {
+    if (error) throw error
 
-  socketServer.on('login')
-
-  socketServer.on('sendMsg', function (param) {
-
-    var sessions,
-      messages,
-      session,
+    var sessions = JSON.parse(fromUserInfo.sessions),
+      toSession,
       now = new Date()
 
-    redisClient.hgetall(param.from, function (error, fromUserInfo) {
+    //查找fromUser下的所有会话中是否已经有了和toUser的会话
+    for (var i = 0; i < sessions.length; i++) {
+      if (sessions[i] && sessions[i].loginName === message.to) {
+        toSession = sessions[i]
+        break
+      }
+    }
+
+    if (!toSession) {
+      // 没有toUser的会话
+      toSession = {
+        loginName: message.to,
+        img: fromUserInfo.img,
+        messages: []
+      }
+      sessions.push(toSession)
+    }
+
+    toSession.messages.push({
+      from: message.from,
+      to: message.to,
+      content: message.content,
+      date: now,
+      self: true
+    })
+
+    redisClient.hmset(message.from, 'sessions', JSON.stringify(sessions)) //保存到fromUser下
+
+    //把消息保存到message.to这个用户下，并且通知message.to
+    redisClient.hgetall(message.to, function (error, toUserInfo) {
       if (error) throw error
-      var sessions = fromUserInfo.sessions
-      if (!sessions) {
-        sessions = []
-      } else {
-        sessions = JSON.parse(sessions)
-      }
 
-      var toSession
+      var sessions = JSON.parse(toUserInfo.sessions),
+        fromSession,
+        now = new Date()
+
       for (var i = 0; i < sessions.length; i++) {
-        if (sessions[i] && sessions[i].loginName === param.to) {
-          toSession = sessions[i]
+        if (sessions[i] && sessions[i].loginName === message.from) {
+          fromSession = sessions[i]
+          break
         }
       }
 
-      if (!toSession) {
-        toSession = {}
-        toSession.loginName = param.to
-        toSession.img = fromUserInfo.img
-        toSession.messages = []
-        sessions.push(toSession)
-      }
-
-      var emitData = {
-        from: param.from,
-        to: param.to,
-        content: param.content,
-        date: now,
-        self: true
-      }
-      toSession.messages.push(emitData)
-      redisClient.hmset(param.from, 'sessions', JSON.stringify(sessions))
-
-      redisClient.hgetall(param.to, function (error, toUserInfo) {
-        if (error) throw error
-        var sessions = toUserInfo.sessions
-        if (!sessions) {
-          sessions = []
-        } else {
-          sessions = JSON.parse(sessions)
-        }
-
-        var fromSession
-        for (var i = 0; i < sessions.length; i++) {
-          if (sessions[i] && sessions[i].loginName === param.from) {
-            fromSession = sessions[i]
-          }
-        }
-
-        if (!fromSession) {
-          fromSession = {}
-          fromSession.loginName = param.from
-          fromSession.img = toUserInfo.img
-          fromSession.messages = []
-          sessions.push(fromSession)
-        }
-
-        var emitData = {
-          from: param.from,
-          to: param.to,
-          content: param.content,
-          date: now,
-          self: false,
+      if (!fromSession) {
+        fromSession = {
+          loginName: message.from,
           img: toUserInfo.img,
           messages: []
         }
-        fromSession.messages.push(emitData)
-        loginNameMapSocket[param.to].emit('receiveMsg', emitData)
-        redisClient.hmset(param.to, 'sessions', JSON.stringify(sessions))
-      })
-
-    })
-    console.log('from ' + param.from + ',to ' + param.to + ' content:' + param.content)
-  })
-
-  socket.on('disconnect', function () {
-    var disconnected = false,
-      disconnectName
-    for (var loginName in loginNameMapSocket) {
-      if (loginNameMapSocket[loginName].id === socket.id) {
-        delete loginNameMapSocket[loginName]
-        disconnected = true
-        disconnectName = loginName
+        sessions.push(fromSession)
       }
-    }
-    redisClient.smembers('room', function (error, loginUsers) {
-      if (error) throw error
-      for (var j = 0; j < loginUsers.length; j++) {
-        var userStr = loginUsers[j]
-        var userObj = JSON.parse(userStr)
-        if (userObj.loginName === disconnectName) {
-          redisClient.srem('room', userStr)
-        }
+
+      var emitData = {
+        from: message.from,
+        to: message.to,
+        content: message.content,
+        date: now,
+        self: false,
       }
-      io.emit('disconnect', loginName)
-      console.log(loginName + " disconnected")
+
+      fromSession.messages.push(emitData)
+      redisClient.hmset(message.to, 'sessions', JSON.stringify(sessions))//保存到toUser下
+      loginNameMapSocket[message.to].emit('receiveMsg', emitData)//通知toUser
     })
-    if (!disconnected) {
-      console.log("disconnect cant find socketId")
-    }
   })
-})
+}
 
 http.listen(8080, function () {
   console.log('listening on *:80');
 });
+
+var response = {
+  ok: function (data) {
+    this.code = 1
+    this.rData = data
+    return this
+  },
+  fail: function (msg) {
+    this.code = 0
+    this.rMsg = msg
+    return this
+  }
+}
