@@ -65,9 +65,11 @@ const store = new Vuex.Store({
       })
 
       var find = findUser(session.loginName);
-      var index = state.users.indexOf(find)
-      if(find) find.notReadMsgCount = 0
-      state.users.splice(index,1,find)
+      if (find){
+        var index = state.users.indexOf(find)
+        find.notReadMsgCount = 0
+        state.users.splice(index,1,find)
+      }
     },
     //初始化用户列表
     initUsers(state, user){
