@@ -125,6 +125,7 @@ function onLogin(credential) {
           if(loginNameMapSocket[credential.loginName]){
             loginNameMapSocket[credential.loginName].emit('kickOff', util.response.ok('你的账号在别处被登录了'))
             loginNameMapSocket[credential.loginName].disconnect()
+            delete loginNameMapSocket[credential.loginName]
           }
         }
       }

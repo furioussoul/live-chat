@@ -11,6 +11,7 @@ function registerEvent() {
   this.socket.on('receiveMsg', onReceiveMsg)
   this.socket.on('disconnect', onDisconnect)
   this.socket.on('notifyUserLogin', onNotifyUserLogin)
+  this.socket.on('kickOff', onKickOff)
 }
 //注册回调事件（监听服务端推送事件）
 ChatClient.prototype.on = function (event, callback) {
@@ -87,4 +88,7 @@ function onNotifyUserLogin(onlineUser) {
   store.commit('refreshUser',onlineUser)
 }
 
-
+function onKickOff({rData}) {
+  store.commit('logout')
+  alert(rData)
+}

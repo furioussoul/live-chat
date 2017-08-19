@@ -27,17 +27,17 @@ const store = new Vuex.Store({
     users: [],//用户列表
     me: null, // 我的id（登录人id）
     sessions: [],// 会话列表
-    currentSessionId: '',//当前聊天窗口id
+    currentSession: '',//当前聊天窗口id
     filterKey: '' //搜索用户的所搜词
   },
   getters: {
     client: ({client}) => client,
     users: ({users}) => users,
     onlineUsers: ({users, myLoginName}) => users.filter(user => user.loginName !== myLoginName),
-    me:({me})=> me,
+    me: ({me}) => me,
     myLoginName: ({myLoginName}) => myLoginName,
     sessions: ({sessions, filterKey}) => sessions && sessions.filter(session => !filterKey || session.loginName.toUpperCase().includes(filterKey.toUpperCase())),
-    currentSession: ({sessions, currentSessionId}) => sessions && sessions.find(session => currentSessionId === session.id)
+    currentSession: ({currentSession}) => currentSession
   },
   mutations: {
     //初始化会话记录
@@ -98,7 +98,8 @@ const store = new Vuex.Store({
       //将用户加入列表
       state.users.push(user)
     },
-    setFilterKey: (state, value) => state.filterKey = value
+    setFilterKey: (state, value) => state.filterKey = value,
+    logout:(state)=> state.me = null
   },
   actions: {
     register({state}, payload){

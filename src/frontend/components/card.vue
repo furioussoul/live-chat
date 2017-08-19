@@ -19,7 +19,7 @@
   <div class="card">
     <header>
       <img class="avatar" width="40" height="40" :alt="me.name" :src="me.img">
-      <p class="name">{{me.name}}</p>
+      <p class="name">{{me.loginName}}</p>
     </header>
     <footer>
       <input class="search" type="text" placeholder="search user..." @keyup="onKeyup">
