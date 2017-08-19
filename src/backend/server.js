@@ -4,9 +4,9 @@ var express = require('express'),
   http = require('http').Server(app),
   io = require('socket.io')(http),
   redisClient = require("redis").createClient('6334', '47.94.2.0'),
-  socketServer,
+  util = require('./util'),
   defaultPhoto = '/static/images/2.png', //默认头像
-  util = require('./util')
+  namePrefix = 'user$'
 
 //捕获node进程异常
 process.on('uncaughtException', function (err) {
@@ -33,36 +33,35 @@ var loginNameMapSocket = {}, //上线注册列表
   registerCode = 'xjbmy' //注册秘钥
 
 function onConnect(socket) {
-  socketServer = socket
-  socketServer.on('register', onRegister)
-  socketServer.on('login', onLogin)
-  socketServer.on('sendMsg', onSendMsg)
-  socketServer.on('disconnect', onDisconnected)
+  socket.on('register', onRegister.bind(socket))
+  socket.on('login', onLogin.bind(socket))
+  socket.on('sendMsg', onSendMsg.bind(socket))
+  socket.on('disconnect', onDisconnected.bind(socket))
 }
 
 function onDisconnected() {
   var disconnected = false,
     disconnectName
-  for (var loginName in loginNameMapSocket) {
-    if (loginNameMapSocket[loginName].id === socketServer.id) {
-      delete loginNameMapSocket[loginName]
+  for (var key in loginNameMapSocket) {
+    if (loginNameMapSocket[key].id === this.id) {
+      delete loginNameMapSocket[key]
       disconnected = true
-      disconnectName = loginName
+      disconnectName = key
       break
     }
   }
-  redisClient.smembers('room', function (error, loginUsers) {
+  redisClient.smembers('room', (function (error, loginUsers) {
     if (error) throw error
     for (var j = 0; j < loginUsers.length; j++) {
       var userStr = loginUsers[j]
       var userObj = JSON.parse(userStr)
-      if (userObj.loginName === disconnectName) {
+      if (namePrefix + userObj.loginName === disconnectName) {
         redisClient.srem('room', userStr)
       }
     }
-    io.emit('disconnect', loginName)
-    console.log(loginName + " disconnected")
-  })
+    io.emit('disconnect', userObj.loginName)
+    console.log(userObj.loginName + " disconnected")
+  }).bind(this))
   if (!disconnected) {
     console.log("disconnect cant find socketId")
   }
@@ -70,16 +69,16 @@ function onDisconnected() {
 
 function onRegister(credential) {
   if (credential.registerCode !== registerCode) {
-    return void socketServer.emit('register', util.response.fail('验证秘钥失败'))
+    return void this.emit('register', util.response.fail('验证秘钥失败'))
   }
-  redisClient.hgetall(credential.loginName, function (error, userInfo) {
+  redisClient.hgetall(credential.loginName, (function (error, userInfo) {
     if (error) throw(error)
     if (userInfo) {
-      return void socketServer.emit('register', util.response.fail('用户名已被注册'))
+      return void this.emit('register', util.response.fail('用户名已被注册'))
     }
 
     //查询在线用户
-    redisClient.smembers('room', function (error, loginUsers) {
+    redisClient.smembers('room', (function (error, loginUsers) {
       if (error) throw error
 
       var user = {}
@@ -93,62 +92,74 @@ function onRegister(credential) {
       user.sessions = JSON.stringify(user.sessions)
       redisClient.hmset(credential.loginName, user)//注册入库
 
-      user.onlineUsers= []
+      redisClient.sadd('room', JSON.stringify({
+        loginName:user.loginName,
+        img:user.img
+      }))//加入聊天室
+      user.onlineUsers = []
       user.sessions = []
-      redisClient.sadd('room', JSON.stringify(user))//加入聊天室
-      io.emit('notifyUserLogin', user)//广播，该用户上线了
-      loginUsers.forEach(loginUserStr=> user.onlineUsers.push(JSON.parse(loginUserStr)))//获取所有在线的人
-      socketServer.emit('register', util.response.ok(user))//通知前段注册成功
+      for (var key in loginNameMapSocket) {
+        if (key === namePrefix + user.loginName) continue
+        loginNameMapSocket[key].emit('notifyUserLogin', user)//广播，该用户上线了
+      }
+      loginUsers.forEach(loginUserStr => user.onlineUsers.push(JSON.parse(loginUserStr)))//获取所有在线的人
+      this.emit('register', util.response.ok(user))//通知前段注册成功
 
-      loginNameMapSocket[credential.loginName] = socketServer//缓存socket
-    })
-  })
+      loginNameMapSocket[namePrefix + credential.loginName] = this//缓存socket
+    }).bind(this))
+  }).bind(this))
 }
 
 function onLogin(credential) {
   //获取用户信息,聊天记录
-  redisClient.hgetall(credential.loginName, function (err, userInfo) {
+  redisClient.hgetall(credential.loginName, (function (err, userInfo) {
     if (err) throw(err)
 
-    if(!userInfo){
-      return void socketServer.emit('login', util.response.fail('用户名不存在，请注册'))
+    if (!userInfo) {
+      return void this.emit('login', util.response.fail('用户名不存在，请注册'))
     }
     if (userInfo.password !== credential.password) {
-      return void socketServer.emit('login', util.response.fail('用户名密码错误'))
+      return void this.emit('login', util.response.fail('用户名密码错误'))
     }
 
-    redisClient.smembers('room', function (error, loginUsers) {
+    redisClient.smembers('room', (function (error, loginUsers) {
       if (error) throw error
 
       for (var i = 0; i < loginUsers.length; i++) {
         if (JSON.parse(loginUsers[i]).loginName === credential.loginName) {//该账号已经登陆了
-          if(loginNameMapSocket[credential.loginName]){
-            loginNameMapSocket[credential.loginName].emit('kickOff', util.response.ok('你的账号在别处被登录了'))
-            loginNameMapSocket[credential.loginName].disconnect()
-            delete loginNameMapSocket[credential.loginName]
+          if (loginNameMapSocket[namePrefix + credential.loginName]) {
+            loginNameMapSocket[namePrefix + credential.loginName].emit('kickOff', util.response.ok('你的账号在别处被登录了'))
+            loginNameMapSocket[namePrefix + credential.loginName].disconnect()
+            delete loginNameMapSocket[namePrefix + credential.loginName]
           }
         }
       }
 
       var user = {}
       util.copyProperties(user, userInfo)
+      redisClient.sadd('room', JSON.stringify({
+        loginName:user.loginName,
+        img:user.img
+      }))//加入聊天室
+
       user.sessions = JSON.parse(user.sessions)
-      redisClient.sadd('room', JSON.stringify(user))//加入聊天室
-      io.emit('notifyUserLogin', user)//广播，该用户上线了
+      for (var key in loginNameMapSocket) {
+        if (key === namePrefix + user.loginName) continue
+        loginNameMapSocket[key].emit('notifyUserLogin', user)//广播，该用户上线了
+      }
+      user.onlineUsers = []
+      loginUsers.forEach(loginUserStr => user.onlineUsers.push(JSON.parse(loginUserStr)))//获取所有在线的人
 
-      user.onlineUsers= []
-      loginUsers.forEach(loginUserStr=> user.onlineUsers.push(JSON.parse(loginUserStr)))//获取所有在线的人
+      this.emit('login', util.response.ok(user))
 
-      socketServer.emit('login', util.response.ok(user))
-
-      loginNameMapSocket[credential.loginName] = socketServer
-    })
-  })
+      loginNameMapSocket[namePrefix + credential.loginName] = this
+    }).bind(this))
+  }).bind(this))
 }
 
 function onSendMsg(message) {
   //把消息保存到message.from这个用户下
-  redisClient.hgetall(message.from, function (error, fromUserInfo) {
+  redisClient.hgetall(message.from, (function (error, fromUserInfo) {
     if (error) throw error
 
     var sessions = JSON.parse(fromUserInfo.sessions),
@@ -184,7 +195,7 @@ function onSendMsg(message) {
     redisClient.hmset(message.from, 'sessions', JSON.stringify(sessions)) //保存到fromUser下
 
     //把消息保存到message.to这个用户下，并且通知message.to
-    redisClient.hgetall(message.to, function (error, toUserInfo) {
+    redisClient.hgetall(message.to, (function (error, toUserInfo) {
       if (error) throw error
 
       var sessions = JSON.parse(toUserInfo.sessions),
@@ -217,9 +228,9 @@ function onSendMsg(message) {
 
       fromSession.messages.push(emitData)
       redisClient.hmset(message.to, 'sessions', JSON.stringify(sessions))//保存到toUser下
-      loginNameMapSocket[message.to].emit('receiveMsg', emitData)//通知toUser
-    })
-  })
+      loginNameMapSocket[namePrefix + message.to].emit('receiveMsg', emitData)//通知toUser
+    }).bind(this))
+  }).bind(this))
 }
 
 http.listen(8080, function () {
