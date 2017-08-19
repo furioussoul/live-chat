@@ -1,8 +1,4 @@
 import store from './store'
-import {
-  info,
-  error
-} from './logger'
 
 function findSession(loginName) {
   let sessions = store.getters.sessions
@@ -24,7 +20,7 @@ function findUser(loginName) {
 
 function copyProperties(target, source) {
   if (!target || !source) {
-    return error('target and source must not be null')
+    return console.error('target and source must not be null')
   }
   for (let key in source) {
     target[key] = source[key]
@@ -35,7 +31,7 @@ function cache(key, value) {
   if (!value) {
     let valueStr = window.localStorage.getItem(key)
     return valueStr
-      ? JSON.stringify(valueStr)
+      ? JSON.parse(valueStr)
       : null
   }
 

@@ -59,7 +59,6 @@
       if (!credential) {
         return
       }
-      credential = JSON.parse(credential)
       if (credential.autoLogin) {
         this.$store.dispatch('login', credential)
       } else {

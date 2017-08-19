@@ -6,7 +6,7 @@
       ...mapGetters(['users'])
     },
     methods: {
-      ...mapMutations(['selectSession'])
+      ...mapMutations(['setCurrentSession'])
     }
   }
 </script>
@@ -16,7 +16,7 @@
     <ul>
         <li v-for="item in users">
         <img style="width: 20px;height: 20px;display: inline-block;vertical-align: middle" :src="item.img"/>
-        <a @click="selectSession(item)" href="#">{{item.loginName}}</a>
+        <a @click="setCurrentSession(item)" href="#">{{item.loginName}}</a>
       </li>
     </ul>
   </div>

@@ -34,9 +34,9 @@ const store = new Vuex.Store({
     client: ({client}) => client,
     users: ({users}) => users,
     myLoginName: ({myLoginName}) => myLoginName,
-    me: ({users, myLoginName}) => users.find(user => myLoginName === user.loginName),
-    sessions: ({sessions, filterKey}) => sessions.filter(session => !filterKey || session.loginName.toUpperCase().includes(filterKey.toUpperCase())),
-    currentSession: ({sessions, currentSessionId}) => sessions.find(session => currentSessionId === session.id)
+    me: ({users, myLoginName}) => users && users.find(user => myLoginName === user.loginName),
+    sessions: ({sessions, filterKey}) => sessions && sessions.filter(session => !filterKey || session.loginName.toUpperCase().includes(filterKey.toUpperCase())),
+    currentSession: ({sessions, currentSessionId}) => sessions && sessions.find(session => currentSessionId === session.id)
   },
   mutations: {
     //初始化会话记录

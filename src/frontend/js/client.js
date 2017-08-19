@@ -10,7 +10,7 @@ function registerEvent() {
   this.socket.on("login", callBack)
   this.socket.on('receiveMsg', onReceiveMsg)
   this.socket.on('disconnect', onDisconnect)
-  this.socket.on('receiveUsers', onReceiveUsers)
+  this.socket.on('notifyUserLogin', onNotifyUserLogin)
 }
 //注册回调事件（监听服务端推送事件）
 ChatClient.prototype.on = function (event, callback) {
@@ -83,12 +83,8 @@ function onDisconnect(loginName) {
   store.state.users = store.state.users.filter(item => item.loginName !== loginName)
 }
 
-function onReceiveUsers(onlineUsers) {
-  let userList = []
-  onlineUsers.forEach(user => {
-    userList.push(JSON.parse(user))
-  })
-  store.state.users = userList.filter(item => item.loginName !== store.state.myLoginName)
+function onNotifyUserLogin(onlineUser) {
+  store.state.users.push(onlineUser)
 }
 
 
