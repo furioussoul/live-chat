@@ -5,6 +5,7 @@
   import Message from './components/message';
   import loginPanel from './components/loginPanel.vue';
   import userListPanel from './components/userListPanel.vue';
+  import store from './js/store'
   import {
     mapGetters,
     mapActions
@@ -13,6 +14,14 @@
     components: {Card, List, TextBox, Message, loginPanel, userListPanel},
     computed: {
       ...mapGetters(['me'])
+    },
+    mounted(){
+      window.onbeforeunload = function() {
+        return false
+      }
+      window.onunload = function() {
+        store.state.client.disconnect()
+      }
     }
   }
 </script>
