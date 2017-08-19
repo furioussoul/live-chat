@@ -16,9 +16,6 @@
       ...mapGetters(['me'])
     },
     mounted(){
-      window.onbeforeunload = function() {
-        return false
-      }
       window.onunload = function() {
         store.state.client.disconnect()
       }

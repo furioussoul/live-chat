@@ -36,7 +36,19 @@ function onConnect(socket) {
   socket.on('register', onRegister.bind(socket))
   socket.on('login', onLogin.bind(socket))
   socket.on('sendMsg', onSendMsg.bind(socket))
+  socket.on('read', onRead.bind(socket))
   socket.on('disconnect', onDisconnected.bind(socket))
+}
+
+function onRead(message) {
+  redisClient.hgetall(message.from, (function (error, userInfo) {
+    userInfo.sessions = JSON.parse(userInfo.sessions)
+    var session = userInfo.sessions.find(session => session.loginName === message.to)
+    message = session.messages.find(msg => msg.id === message.id)
+    message.read = true
+    redisClient.hmset(message.from, 'sessions', JSON.stringify(userInfo.sessions))//性能不好
+    loginNameMapSocket[namePrefix + message.from].emit('receiveRead',message)
+  }).bind(this))
 }
 
 function onDisconnected() {
@@ -185,6 +197,7 @@ function onSendMsg(message) {
     }
 
     toSession.messages.push({
+      id:message.id,
       from: message.from,
       to: message.to,
       content: message.content,
@@ -219,6 +232,7 @@ function onSendMsg(message) {
       }
 
       var emitData = {
+        id:message.id,
         from: message.from,
         to: message.to,
         content: message.content,

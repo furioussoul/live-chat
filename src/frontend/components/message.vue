@@ -11,6 +11,11 @@
           date = new Date(date);
         }
         return date.getHours() + ':' + date.getMinutes();
+      },
+      readFilter(alreadyRead){
+        return alreadyRead
+          ? '已读'
+          : '未读'
       }
     },
     directives: {
@@ -34,6 +39,7 @@
         <div class="main" :class="{ self: item.self }">
           <img class="avatar" width="30" height="30" :src="item.self ? me.img : currentSession.img"/>
           <div class="text">{{ item.content }}</div>
+          <div v-if="item.self" class="read-text">{{ item.read | readFilter}} </div>
         </div>
       </li>
     </ul>
@@ -67,6 +73,7 @@
       border-radius: 3px;
     }
     .text {
+      vertical-align: middle;
       display: inline-block;
       position: relative;
       padding: 0 10px;
@@ -87,6 +94,22 @@
         border: 6px solid transparent;
         border-right-color: #fafafa;
       }
+    }
+
+    .read-text {
+      vertical-align: bottom;
+      display: inline-block;
+      position: relative;
+      top:20px;
+      left: -5px;
+      padding: 0 10px;
+      max-width: ~'calc(100% - 40px)';
+      min-height: 30px;
+      line-height: 2;
+      font-size: 10px;
+      text-align: left;
+      word-break: break-all;
+      border-radius: 4px;
     }
 
     .self {

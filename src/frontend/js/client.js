@@ -14,6 +14,7 @@ function registerEvent() {
   this.socket.on('disconnect', onDisconnect)
   this.socket.on('notifyUserLogin', onNotifyUserLogin)
   this.socket.on('kickOff', onKickOff)
+  this.socket.on('receiveRead', onReceiveRead)
 }
 //注册回调事件（监听服务端推送事件）
 ChatClient.prototype.on = function (event, callback) {
@@ -51,6 +52,10 @@ export function ChatClient({host, port}) {
   this.sendMsg = function (param) {
     this.socket.emit('sendMsg', param);
   }
+
+  this.read = function (param) {
+    this.socket.emit('read', param)
+  }
 }
 
 function callBack({code, rMsg, rData}) {
@@ -63,24 +68,40 @@ function callBack({code, rMsg, rData}) {
   }
 }
 
+function onReceiveRead(message) {
+  let currentSession = store.state.currentSession
+
+  if(currentSession && currentSession.loginName === message.to){
+    //往当前对话窗口添加消息
+    let session = {}
+    copyProperties(session, currentSession)
+    session.messages.find(msg => msg.id === message.id).read = true
+    return store.state.currentSession = session
+  }
+}
+
 function onReceiveMsg(message) {
   let exitSession,
     sessions = store.state.sessions,
     currentSession = store.state.currentSession
 
   if(currentSession && currentSession.loginName === message.from){
+    //往当前对话窗口添加消息
     let session = {}
     copyProperties(session, currentSession)
     session.messages.push(message)
-    return store.state.currentSession = session
+    store.state.currentSession = session
+    return store.state.client.read(message) //已读
   }
 
-  //聊天记录里面没有from的session
+  let userFrom = findUser(message.from)
+
+  //往聊天缓存中添加消息
   if (!(exitSession = findSession(message.from))) {
-    //新建from的session
+    // 聊天记录里面没有from的session，新建from的session
     exitSession = {
       loginName: message.from,
-      img: findUser(message.from).img,
+      img: userFrom.img,
       messages: [message]
     }
     sessions.push(exitSession)
@@ -88,6 +109,10 @@ function onReceiveMsg(message) {
     //from的session加入消息
     exitSession.messages.push(message)
   }
+
+  //
+  // if(userFrom.notReadMsgCount) userFrom.notReadMsgCount = 0
+  // userFrom.notReadMsgCount++
 }
 
 function onDisconnect(loginName) {

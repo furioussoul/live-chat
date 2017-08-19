@@ -10,7 +10,8 @@ import {
 import {
   findSession,
   findUser,
-  copyProperties
+  copyProperties,
+  guid
 } from './util'
 Vue.use(Vuex);
 
@@ -27,7 +28,7 @@ const store = new Vuex.Store({
     users: [],//用户列表
     me: null, // 我的id（登录人id）
     sessions: [],// 会话列表
-    currentSession:null,//当前聊天窗口id
+    currentSession: null,//当前聊天窗口id
     filterKey: '' //搜索用户的所搜词
   },
   getters: {
@@ -51,9 +52,17 @@ const store = new Vuex.Store({
       if (exitSession) {
         state.currentSession = exitSession
       } else {
+        exitSession = session
         state.currentSession = session //sessions包含currentSession的引用
         state.sessions.push(session)
       }
+
+      exitSession.messages.forEach(msg => {
+        if(state.me.loginName === msg.to){
+          //自己是收消息的人
+          state.client.read(msg)
+        }
+      })
     },
     //初始化用户列表
     initUsers(state, user){
@@ -84,13 +93,16 @@ const store = new Vuex.Store({
       state.client.login(payload)
     },
     sendMsg ({state}, content) {
-      var message = {
-        from: state.me.loginName,
-        to: state.currentSession.loginName,
-        content,
-        self: true,
-        date: new Date()
-      }
+      var msgId = guid(),
+        message = {
+          id: msgId,
+          from: state.me.loginName,
+          to: state.currentSession.loginName,
+          content,
+          self: true,
+          read: false,
+          date: new Date()
+        }
 
       var session = {}
       copyProperties(session, state.currentSession)
@@ -99,6 +111,7 @@ const store = new Vuex.Store({
       //往当前窗口写消息
 
       state.client.sendMsg({
+        id: msgId,
         'from': state.me.loginName,
         'to': state.currentSession.loginName,
         content
