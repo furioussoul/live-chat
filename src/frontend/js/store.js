@@ -63,16 +63,7 @@ const store = new Vuex.Store({
         user.notReadMsgCount = count
         users.splice(index, 1, user)
       })
-      /*
-       //左侧聊天记录变黄色
-       for (var key in userMapNotRead) {
-       if(userMapNotRead > 0){
-       var ss = findSession(key)
-       var index = state.sessions.indexOf(ss);
-       ss.notRead = true
-       state.sessions.splice(index,1,ss)
-       }
-       }*/
+
       state.sessions = sessions
     },
     //设置当前会话
@@ -86,6 +77,8 @@ const store = new Vuex.Store({
         state.currentSession = session //sessions包含currentSession的引用
         state.sessions.push(session)
       }
+
+      exitSession.notRead = 0
 
       if (exitSession.messages[0]) {
         state.client.read(exitSession.messages[0])

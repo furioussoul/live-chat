@@ -129,6 +129,11 @@ function onReceiveMsg(message) {
     if (!user.notReadMsgCount) user.notReadMsgCount = 0
     user.notReadMsgCount++
     users.splice(index, 1, user)
+
+    let ss = findSession(message.from)
+    index = sessions.indexOf(ss)
+    ss.notRead = user.notReadMsgCount
+    sessions.splice(index, 1, ss)
   }
 }
 

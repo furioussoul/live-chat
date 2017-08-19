@@ -10,14 +10,14 @@
     },
     methods: {
       ...mapMutations([
-          'setCurrentSession'
+        'setCurrentSession'
       ])
     },
-    filters:{
+    filters: {
       truncateStr(value){
-          if(value){
-              return value.substring(0,10)
-          }
+        if (value) {
+          return value.substring(0, 10)
+        }
       }
     }
   };
@@ -27,11 +27,21 @@
   <div class="list">
     <ul>
       <li v-for="(item, index) in sessions"
-          :class="{ active: currentSession ? item.loginName === currentSession.loginName : index == 0}"
+          :class="[{
+          active: currentSession
+          ? item.loginName === currentSession.loginName
+          : index == 0}]"
           @click="setCurrentSession(item)">
         <img class="avatar" width="30" height="30" :alt="item.loginName" :src="item.img">
-        <p v-if="!item.notRead" class="name">{{item.loginName | truncateStr}}</p>
-        <p v-else class="name" style="background-color: chartreuse">{{item.loginName | truncateStr}}</p>
+        <p class="name">
+          <span>{{item.loginName | truncateStr}}</span>
+          <span style="float: right;
+          background-color: red;border-radius: 5px;
+          width: 30px;
+          text-align: center" v-if="item.notRead">
+            {{item.notRead}}
+          </span>
+        </p>
       </li>
     </ul>
   </div>
