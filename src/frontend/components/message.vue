@@ -2,7 +2,7 @@
   import {mapGetters} from 'vuex'
   export default {
     computed: {
-      ...mapGetters(['user', 'currentToSession','userList'])
+      ...mapGetters(['me', 'currentSession'])
     },
     filters: {
       // 将日期过滤为 hour:minutes
@@ -11,6 +11,11 @@
           date = new Date(date);
         }
         return date.getHours() + ':' + date.getMinutes();
+      },
+      readFilter(alreadyRead){
+        return alreadyRead
+          ? '已读'
+          : '未读'
       }
     },
     directives: {
@@ -26,14 +31,15 @@
 
 <template>
   <div class="message" v-scroll-bottom>
-    <ul v-if="currentToSession">
-      <li v-for="item in currentToSession.messages">
+    <ul v-if="currentSession">
+      <li v-for="item in currentSession.messages">
         <p class="time">
           <span>{{ item.date | time}}</span>
         </p>
         <div class="main" :class="{ self: item.self }">
-          <img class="avatar" width="30" height="30" :src="item.self ? user.img : currentToSession.img"/>
+          <img class="avatar" width="30" height="30" :src="item.self ? me.img : currentSession.img"/>
           <div class="text">{{ item.content }}</div>
+          <div v-if="item.self" class="read-text">{{ item.read | readFilter}} </div>
         </div>
       </li>
     </ul>
@@ -67,6 +73,7 @@
       border-radius: 3px;
     }
     .text {
+      vertical-align: middle;
       display: inline-block;
       position: relative;
       padding: 0 10px;
@@ -87,6 +94,22 @@
         border: 6px solid transparent;
         border-right-color: #fafafa;
       }
+    }
+
+    .read-text {
+      vertical-align: bottom;
+      display: inline-block;
+      position: relative;
+      top:20px;
+      left: -5px;
+      padding: 0 10px;
+      max-width: ~'calc(100% - 40px)';
+      min-height: 30px;
+      line-height: 2;
+      font-size: 10px;
+      text-align: left;
+      word-break: break-all;
+      border-radius: 4px;
     }
 
     .self {

@@ -3,10 +3,10 @@
   import {mapMutations} from 'vuex'
   export default{
     computed: {
-      ...mapGetters(['userList'])
+      ...mapGetters(['onlineUsers'])
     },
     methods: {
-      ...mapMutations(['addSession'])
+      ...mapMutations(['setCurrentSession'])
     }
   }
 </script>
@@ -14,9 +14,10 @@
   <div>
     当前登录用户
     <ul>
-        <li v-for="item in userList">
+      <li v-for="item in onlineUsers">
         <img style="width: 20px;height: 20px;display: inline-block;vertical-align: middle" :src="item.img"/>
-        <a @click="addSession(item)" href="#">{{item.loginName}}</a>
+        <a @click="setCurrentSession(item)" href="#">{{item.loginName}}</a>
+        <span>{{item.notReadMsgCount}}</span>
       </li>
     </ul>
   </div>

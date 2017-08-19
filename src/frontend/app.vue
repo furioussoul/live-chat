@@ -5,10 +5,7 @@
   import Message from './components/message';
   import loginPanel from './components/loginPanel.vue';
   import userListPanel from './components/userListPanel.vue';
-  import {
-      flash_title
-  } from './js/notification'
-
+  import store from './js/store'
   import {
     mapGetters,
     mapActions
@@ -16,16 +13,18 @@
   export default {
     components: {Card, List, TextBox, Message, loginPanel, userListPanel},
     computed: {
-      ...mapGetters(['user'])
+      ...mapGetters(['me'])
     },
     mounted(){
-      setInterval(flash_title, 1000); //2秒之后调用一次
+      window.onunload = function() {
+        store.state.client.disconnect()
+      }
     }
   }
 </script>
 
 <template>
-  <div class="view" v-if="user">
+  <div class="view" v-if="me">
     <div class="sidebar">
       <card></card>
       <list></list>
