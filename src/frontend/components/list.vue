@@ -5,12 +5,12 @@
     computed: {
       ...mapGetters([
         'sessions',
-        'currentToSession'
+        'currentSession'
       ])
     },
     methods: {
       ...mapMutations([
-          'changeCurrentToSession'
+          'setCurrentSession'
       ])
     },
     filters:{
@@ -27,8 +27,8 @@
   <div class="list">
     <ul>
       <li v-for="(item, index) in sessions"
-          :class="{ active: currentToSession.loginName ? item.loginName === currentToSession.loginName : index == 0}"
-          @click="changeCurrentToSession(item.loginName)">
+          :class="{ active: currentSession ? item.loginName === currentSession.loginName : index == 0}"
+          @click="setCurrentSession(item)">
         <img class="avatar" width="30" height="30" :alt="item.loginName" :src="item.img">
         <p class="name">{{item.loginName | truncateStr}}</p>
       </li>
