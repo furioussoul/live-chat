@@ -7,8 +7,8 @@ var express = require('express'),
   util = require('./util'),
   defaultPhoto = '/static/images/2.png', //默认头像
   namePrefix = 'user$',
- appPath = __dirname.replace(/backend/,'')
- appPath = appPath.replace(/src/,'')
+  appPath = __dirname.replace(/backend/, '')
+appPath = appPath.replace(/src/, '')
 
 
 //捕获node进程异常
@@ -50,7 +50,7 @@ function onRead(message) {
     message = session.messages.find(msg => msg.id === message.id)
     message.read = true
     redisClient.hmset(message.from, 'sessions', JSON.stringify(userInfo.sessions))//性能不好
-    loginNameMapSocket[namePrefix + message.from].emit('receiveRead',message)
+    loginNameMapSocket[namePrefix + message.from].emit('receiveRead', message)
   }).bind(this))
 }
 
@@ -108,8 +108,8 @@ function onRegister(credential) {
       redisClient.hmset(credential.loginName, user)//注册入库
 
       redisClient.sadd('room', JSON.stringify({
-        loginName:user.loginName,
-        img:user.img
+        loginName: user.loginName,
+        img: user.img
       }))//加入聊天室
       user.onlineUsers = []
       user.sessions = []
@@ -142,32 +142,30 @@ function onLogin(credential) {
 
       for (var i = 0; i < loginUsers.length; i++) {
         if (JSON.parse(loginUsers[i]).loginName === credential.loginName) {//该账号已经登陆了
-          if (loginNameMapSocket[namePrefix + credential.loginName]) {
-            loginNameMapSocket[namePrefix + credential.loginName].emit('kickOff', util.response.ok('你的账号在别处被登录了'))
-            loginNameMapSocket[namePrefix + credential.loginName].disconnect()
-            delete loginNameMapSocket[namePrefix + credential.loginName]
-          }
+           return void this.emit('login', util.response.fail('你的账号已经登录'))
         }
       }
+      loginNameMapSocket[namePrefix + credential.loginName] = this
 
       var user = {}
       util.copyProperties(user, userInfo)
+      user.sessions = JSON.parse(user.sessions)
+      user.onlineUsers = []
+
       redisClient.sadd('room', JSON.stringify({
-        loginName:user.loginName,
-        img:user.img
+        loginName: user.loginName,
+        img: user.img
       }))//加入聊天室
 
-      user.sessions = JSON.parse(user.sessions)
+
       for (var key in loginNameMapSocket) {
         if (key === namePrefix + user.loginName) continue
         loginNameMapSocket[key].emit('notifyUserLogin', user)//广播，该用户上线了
       }
-      user.onlineUsers = []
-      loginUsers.forEach(loginUserStr => user.onlineUsers.push(JSON.parse(loginUserStr)))//获取所有在线的人
 
+      loginUsers.forEach(loginUserStr => user.onlineUsers.push(JSON.parse(loginUserStr)))//获取所有在线的人
       this.emit('login', util.response.ok(user))
 
-      loginNameMapSocket[namePrefix + credential.loginName] = this
     }).bind(this))
   }).bind(this))
 }
@@ -200,7 +198,7 @@ function onSendMsg(message) {
     }
 
     toSession.messages.push({
-      id:message.id,
+      id: message.id,
       from: message.from,
       to: message.to,
       content: message.content,
@@ -235,7 +233,7 @@ function onSendMsg(message) {
       }
 
       var emitData = {
-        id:message.id,
+        id: message.id,
         from: message.from,
         to: message.to,
         content: message.content,
