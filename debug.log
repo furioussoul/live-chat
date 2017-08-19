@@ -13,3 +13,6 @@
 [0819/190750.456:ERROR:process_info.cc(632)] range at 0xbd5a652600000000, size 0x253 fully unreadable
 [0819/190750.456:ERROR:process_info.cc(632)] range at 0xbd5a658800000000, size 0x253 fully unreadable
 [0819/190750.456:ERROR:process_info.cc(632)] range at 0x0, size 0x253 fully unreadable
+[0819/195143.315:ERROR:process_info.cc(632)] range at 0x1479652400000000, size 0x1a1 fully unreadable
+[0819/195143.316:ERROR:process_info.cc(632)] range at 0x1479658600000000, size 0x1a1 fully unreadable
+[0819/195143.316:ERROR:process_info.cc(632)] range at 0x0, size 0x1a1 fully unreadable
