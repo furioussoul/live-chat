@@ -17,7 +17,7 @@
     },
     mounted(){
       window.onunload = function() {
-        store.state.client.disconnect()
+        store.state.client.socket.disconnect()
       }
     }
   }

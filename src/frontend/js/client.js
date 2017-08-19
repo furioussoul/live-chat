@@ -60,7 +60,7 @@ export function ChatClient({host, port}) {
 
 function callBack({code, rMsg, rData}) {
   if (code === 1) {
-    store.commit('initUsers',rData)
+    store.commit('initUsers', rData)
     store.commit('initSessions', rData.sessions)
     cache('credential', rData)
   } else {
@@ -71,11 +71,11 @@ function callBack({code, rMsg, rData}) {
 function onReceiveRead(message) {
   let currentSession = store.state.currentSession
 
-  if(currentSession && currentSession.loginName === message.to){
+  if (currentSession && currentSession.loginName === message.to) {
     //往当前对话窗口添加消息
     let session = {}
     copyProperties(session, currentSession)
-    session.messages.find(msg => msg.id === message.id).read = true
+    session.messages.find(msg => msg.id === message.id).read = true//标记已读
     return store.state.currentSession = session
   }
 }
@@ -83,9 +83,10 @@ function onReceiveRead(message) {
 function onReceiveMsg(message) {
   let exitSession,
     sessions = store.state.sessions,
-    currentSession = store.state.currentSession
+    currentSession = store.state.currentSession,
+    users = store.state.users
 
-  if(currentSession && currentSession.loginName === message.from){
+  if (currentSession && currentSession.loginName === message.from) {
     //往当前对话窗口添加消息
     let session = {}
     copyProperties(session, currentSession)
@@ -110,9 +111,14 @@ function onReceiveMsg(message) {
     exitSession.messages.push(message)
   }
 
-  //
-  // if(userFrom.notReadMsgCount) userFrom.notReadMsgCount = 0
-  // userFrom.notReadMsgCount++
+  if (currentSession && currentSession.loginName !== message.from) {
+    //标记未读的数量
+    var user = findUser(message.from)
+    var index = users.indexOf(user)
+    if (!user.notReadMsgCount) user.notReadMsgCount = 0
+    user.notReadMsgCount++
+    users.splice(index,1,user)
+  }
 }
 
 function onDisconnect(loginName) {
@@ -120,7 +126,7 @@ function onDisconnect(loginName) {
 }
 
 function onNotifyUserLogin(onlineUser) {
-  store.commit('refreshUser',onlineUser)
+  store.commit('refreshUser', onlineUser)
 }
 
 function onKickOff({rData}) {
