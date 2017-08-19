@@ -25,7 +25,7 @@ const store = new Vuex.Store({
   state: {
     client: null,//socket 客户端
     users: [],//用户列表
-    myLoginName: '', // 我的id（登录人id）
+    me: null, // 我的id（登录人id）
     sessions: [],// 会话列表
     currentSessionId: '',//当前聊天窗口id
     filterKey: '' //搜索用户的所搜词
@@ -33,8 +33,9 @@ const store = new Vuex.Store({
   getters: {
     client: ({client}) => client,
     users: ({users}) => users,
+    onlineUsers: ({users, myLoginName}) => users.filter(user => user.loginName !== myLoginName),
+    me:({me})=> me,
     myLoginName: ({myLoginName}) => myLoginName,
-    me: ({users, myLoginName}) => users && users.find(user => myLoginName === user.loginName),
     sessions: ({sessions, filterKey}) => sessions && sessions.filter(session => !filterKey || session.loginName.toUpperCase().includes(filterKey.toUpperCase())),
     currentSession: ({sessions, currentSessionId}) => sessions && sessions.find(session => currentSessionId === session.id)
   },
@@ -82,16 +83,17 @@ const store = new Vuex.Store({
       }
     },
     //初始化用户列表
-    initUsers(state, users){
-      state.users = users
+    initUsers(state, user){
+      state.me = user
+      state.users = user.onlineUsers
     },
     //更新用户列表中用户的信息
     refreshUser(state, user){
-      state.myLoginName = user.loginName
       var oldUser
       if ((oldUser = findUser(user.loginName))) {
         //用户已经在用户列表,更新用户信息
-        return copyProperties(oldUser, user)
+        copyProperties(oldUser, user)
+        return state.users[state.users.indexOf(oldUser)] = user
       }
       //将用户加入列表
       state.users.push(user)

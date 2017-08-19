@@ -52,7 +52,7 @@ export function ChatClient({host, port}) {
 
 function callBack({code, rMsg, rData}) {
   if (code === 1) {
-    store.commit('refreshUser', rData)
+    store.commit('initUsers',rData)
     store.commit('initSessions', rData.sessions)
     cache('credential', rData)
   } else {
@@ -84,7 +84,7 @@ function onDisconnect(loginName) {
 }
 
 function onNotifyUserLogin(onlineUser) {
-  store.state.users.push(onlineUser)
+  store.commit('refreshUser',onlineUser)
 }
 
 
