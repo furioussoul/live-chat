@@ -59,6 +59,7 @@
       width: 25%;
       color: #f4f4f4;
       background-color: #2e3238;
+      overflow: scroll;
     }
     .main {
       width: 75%;
