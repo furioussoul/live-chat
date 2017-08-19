@@ -43,6 +43,26 @@ const store = new Vuex.Store({
   mutations: {
     //初始化会话记录
     initSessions(state, sessions){
+      var userMapNotRead = {},
+        users = state.users
+      //计算有多少条未读，和登录用户匹配
+      sessions.forEach(session => {
+        session.messages.forEach(msg => {
+          if (!msg.read) {
+            if (!userMapNotRead[session.loginName]) {
+              userMapNotRead[session.loginName] = 0
+            }
+            userMapNotRead[session.loginName]++
+          }
+        })
+      })
+
+      users.forEach(user=>{
+        var count = userMapNotRead[user.loginName]//未读数量
+        var index = users.indexOf(user)//在线用户的下标
+        user.notReadMsgCount = count
+        users.splice(index, 1, user)
+      })
       state.sessions = sessions
     },
     //设置当前会话

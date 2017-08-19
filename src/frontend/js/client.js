@@ -122,7 +122,7 @@ function onReceiveMsg(message) {
 }
 
 function onDisconnect(loginName) {
-  store.state.users = store.state.users.filter(item => item.loginName !== loginName)
+  store.state.users = store.state.users.filter(item => item && item.loginName !== loginName)
 }
 
 function onNotifyUserLogin(onlineUser) {
