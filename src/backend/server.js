@@ -48,21 +48,23 @@ function onRead(message) {
     userInfo.sessions = JSON.parse(userInfo.sessions)
     var session = userInfo.sessions.find(session => session.loginName === message.from)
     session.messages.forEach(msg => {
-      msg.read = true
+      if (!msg.read) {
+        msg.read = true
+        loginNameMapSocket[namePrefix + message.to].emit('receiveRead', msg)
+      }
     })
     redisClient.hmset(message.to, 'sessions', JSON.stringify(userInfo.sessions))
-    message.read = true
-    loginNameMapSocket[namePrefix + message.to].emit('receiveRead', message)
   }).bind(this))
   redisClient.hgetall(message.from, (function (error, userInfo) {
     userInfo.sessions = JSON.parse(userInfo.sessions)
     var session = userInfo.sessions.find(session => session.loginName === message.to)
     session.messages.forEach(msg => {
-      msg.read = true
+      if (!msg.read) {
+        msg.read = true
+        loginNameMapSocket[namePrefix + message.from].emit('receiveRead', msg)
+      }
     })
     redisClient.hmset(message.from, 'sessions', JSON.stringify(userInfo.sessions))
-    message.read = true
-    loginNameMapSocket[namePrefix + message.from].emit('receiveRead', message)
   }).bind(this))
 }
 

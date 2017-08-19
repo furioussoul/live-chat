@@ -69,7 +69,8 @@ function callBack({code, rMsg, rData}) {
 }
 
 function onReceiveRead(message) {
-  let currentSession = store.state.currentSession
+  let currentSession = store.state.currentSession,
+    sessions = store.state.sessions
 
   if (currentSession && currentSession.loginName === message.to) {
     //往当前对话窗口添加消息
@@ -77,6 +78,16 @@ function onReceiveRead(message) {
     copyProperties(session, currentSession)
     session.messages.find(msg => msg.id === message.id).read = true//标记已读
     return store.state.currentSession = session
+  }
+
+  let find = findSession(message.to)
+  if (find) {
+    //往当前对话窗口添加消息
+    let ss = {}
+    copyProperties(ss, find)
+    ss.messages.find(msg => msg.id === message.id).read = true//标记已读
+    let index = sessions.indexOf(find)
+    sessions.splice(index, 1, ss)
   }
 }
 
@@ -113,11 +124,11 @@ function onReceiveMsg(message) {
 
   if (!currentSession || (currentSession && currentSession.loginName !== message.from)) {
     //标记未读的数量
-    var user = findUser(message.from)
-    var index = users.indexOf(user)
+    let user = findUser(message.from)
+    let index = users.indexOf(user)
     if (!user.notReadMsgCount) user.notReadMsgCount = 0
     user.notReadMsgCount++
-    users.splice(index,1,user)
+    users.splice(index, 1, user)
   }
 }
 
