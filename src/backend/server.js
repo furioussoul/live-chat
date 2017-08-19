@@ -44,13 +44,27 @@ function onConnect(socket) {
 }
 
 function onRead(message) {
+  redisClient.hgetall(message.to, (function (error, userInfo) {
+    userInfo.sessions = JSON.parse(userInfo.sessions)
+    var session = userInfo.sessions.find(session => session.loginName === message.from)
+    session.messages.forEach(msg => {
+      if (!msg.read) {
+        msg.read = true
+        loginNameMapSocket[namePrefix + message.to].emit('receiveRead', msg)
+      }
+    })
+    redisClient.hmset(message.to, 'sessions', JSON.stringify(userInfo.sessions))
+  }).bind(this))
   redisClient.hgetall(message.from, (function (error, userInfo) {
     userInfo.sessions = JSON.parse(userInfo.sessions)
     var session = userInfo.sessions.find(session => session.loginName === message.to)
-    message = session.messages.find(msg => msg.id === message.id)
-    message.read = true
-    redisClient.hmset(message.from, 'sessions', JSON.stringify(userInfo.sessions))//性能不好
-    loginNameMapSocket[namePrefix + message.from].emit('receiveRead', message)
+    session.messages.forEach(msg => {
+      if (!msg.read) {
+        msg.read = true
+        loginNameMapSocket[namePrefix + message.from].emit('receiveRead', msg)
+      }
+    })
+    redisClient.hmset(message.from, 'sessions', JSON.stringify(userInfo.sessions))
   }).bind(this))
 }
 
@@ -142,7 +156,7 @@ function onLogin(credential) {
 
       for (var i = 0; i < loginUsers.length; i++) {
         if (JSON.parse(loginUsers[i]).loginName === credential.loginName) {//该账号已经登陆了
-           return void this.emit('login', util.response.fail('你的账号已经登录'))
+          return void this.emit('login', util.response.fail('你的账号已经登录'))
         }
       }
       loginNameMapSocket[namePrefix + credential.loginName] = this

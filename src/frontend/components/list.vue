@@ -30,7 +30,8 @@
           :class="{ active: currentSession ? item.loginName === currentSession.loginName : index == 0}"
           @click="setCurrentSession(item)">
         <img class="avatar" width="30" height="30" :alt="item.loginName" :src="item.img">
-        <p class="name">{{item.loginName | truncateStr}}</p>
+        <p v-if="!item.notRead" class="name">{{item.loginName | truncateStr}}</p>
+        <p v-else class="name" style="background-color: chartreuse">{{item.loginName | truncateStr}}</p>
       </li>
     </ul>
   </div>
@@ -38,6 +39,7 @@
 
 <style scoped lang="less">
   .list {
+
     li {
       padding: 12px 15px;
       border-bottom: 1px solid #292C33;

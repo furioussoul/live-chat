@@ -16,7 +16,7 @@ import {
 Vue.use(Vuex);
 
 function connect(state) {
-  state.client = new ChatClient({host: '47.94.2.0', port: 80})
+  state.client = new ChatClient({host: '127.0.0.1', port: 80})
   if (!state.client.connect()) {
     alert('连接失败')
   }
@@ -43,6 +43,36 @@ const store = new Vuex.Store({
   mutations: {
     //初始化会话记录
     initSessions(state, sessions){
+      var userMapNotRead = {},
+        users = state.users
+      //计算有多少条未读，和登录用户匹配
+      sessions.forEach(session => {
+        session.messages.forEach(msg => {
+          if (!msg.read) {
+            if (!userMapNotRead[session.loginName]) {
+              userMapNotRead[session.loginName] = 0
+            }
+            userMapNotRead[session.loginName]++
+          }
+        })
+      })
+
+      users.forEach(user => {
+        var count = userMapNotRead[user.loginName]//未读数量
+        var index = users.indexOf(user)//在线用户的下标
+        user.notReadMsgCount = count
+        users.splice(index, 1, user)
+      })
+      /*
+       //左侧聊天记录变黄色
+       for (var key in userMapNotRead) {
+       if(userMapNotRead > 0){
+       var ss = findSession(key)
+       var index = state.sessions.indexOf(ss);
+       ss.notRead = true
+       state.sessions.splice(index,1,ss)
+       }
+       }*/
       state.sessions = sessions
     },
     //设置当前会话
@@ -57,12 +87,16 @@ const store = new Vuex.Store({
         state.sessions.push(session)
       }
 
-      exitSession.messages.forEach(msg => {
-        if(state.me.loginName === msg.to){
-          //自己是收消息的人
-          state.client.read(msg)
-        }
-      })
+      if (exitSession.messages[0]) {
+        state.client.read(exitSession.messages[0])
+      }
+
+      var find = findUser(session.loginName);
+      if (find) {
+        var index = state.users.indexOf(find)
+        find.notReadMsgCount = 0
+        state.users.splice(index, 1, find)
+      }
     },
     //初始化用户列表
     initUsers(state, user){
