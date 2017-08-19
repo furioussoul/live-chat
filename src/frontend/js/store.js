@@ -57,12 +57,22 @@ const store = new Vuex.Store({
         })
       })
 
-      users.forEach(user=>{
+      users.forEach(user => {
         var count = userMapNotRead[user.loginName]//未读数量
         var index = users.indexOf(user)//在线用户的下标
         user.notReadMsgCount = count
         users.splice(index, 1, user)
       })
+      /*
+       //左侧聊天记录变黄色
+       for (var key in userMapNotRead) {
+       if(userMapNotRead > 0){
+       var ss = findSession(key)
+       var index = state.sessions.indexOf(ss);
+       ss.notRead = true
+       state.sessions.splice(index,1,ss)
+       }
+       }*/
       state.sessions = sessions
     },
     //设置当前会话
@@ -77,18 +87,15 @@ const store = new Vuex.Store({
         state.sessions.push(session)
       }
 
-      exitSession.messages.forEach(msg => {
-        if(state.me.loginName === msg.to){
-          //自己是收消息的人
-          state.client.read(msg)
-        }
-      })
+      if (exitSession.messages[0]) {
+        state.client.read(exitSession.messages[0])
+      }
 
       var find = findUser(session.loginName);
-      if (find){
+      if (find) {
         var index = state.users.indexOf(find)
         find.notReadMsgCount = 0
-        state.users.splice(index,1,find)
+        state.users.splice(index, 1, find)
       }
     },
     //初始化用户列表

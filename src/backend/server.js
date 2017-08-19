@@ -47,17 +47,21 @@ function onRead(message) {
   redisClient.hgetall(message.to, (function (error, userInfo) {
     userInfo.sessions = JSON.parse(userInfo.sessions)
     var session = userInfo.sessions.find(session => session.loginName === message.from)
-    message = session.messages.find(msg => msg.id === message.id)
-    message.read = true
+    session.messages.forEach(msg => {
+      msg.read = true
+    })
     redisClient.hmset(message.to, 'sessions', JSON.stringify(userInfo.sessions))
+    message.read = true
     loginNameMapSocket[namePrefix + message.to].emit('receiveRead', message)
   }).bind(this))
   redisClient.hgetall(message.from, (function (error, userInfo) {
     userInfo.sessions = JSON.parse(userInfo.sessions)
     var session = userInfo.sessions.find(session => session.loginName === message.to)
-    message = session.messages.find(msg => msg.id === message.id)
-    message.read = true
+    session.messages.forEach(msg => {
+      msg.read = true
+    })
     redisClient.hmset(message.from, 'sessions', JSON.stringify(userInfo.sessions))
+    message.read = true
     loginNameMapSocket[namePrefix + message.from].emit('receiveRead', message)
   }).bind(this))
 }
@@ -78,8 +82,6 @@ function onDisconnected() {
     for (var j = 0; j < loginUsers.length; j++) {
       var userStr = loginUsers[j]
       var userObj = JSON.parse(userStr)
-      console.log('user：' + userStr +' disconnected')
-
       if (namePrefix + userObj.loginName === disconnectName) {
         redisClient.srem('room', userStr)
       }
@@ -152,7 +154,7 @@ function onLogin(credential) {
 
       for (var i = 0; i < loginUsers.length; i++) {
         if (JSON.parse(loginUsers[i]).loginName === credential.loginName) {//该账号已经登陆了
-           return void this.emit('login', util.response.fail('你的账号已经登录'))
+          return void this.emit('login', util.response.fail('你的账号已经登录'))
         }
       }
       loginNameMapSocket[namePrefix + credential.loginName] = this

@@ -111,7 +111,7 @@ function onReceiveMsg(message) {
     exitSession.messages.push(message)
   }
 
-  if (currentSession && currentSession.loginName !== message.from) {
+  if (!currentSession || (currentSession && currentSession.loginName !== message.from)) {
     //标记未读的数量
     var user = findUser(message.from)
     var index = users.indexOf(user)
