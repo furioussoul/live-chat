@@ -6,7 +6,10 @@ var express = require('express'),
   redisClient = require("redis").createClient('6334', '47.94.2.0'),
   util = require('./util'),
   defaultPhoto = '/static/images/2.png', //默认头像
-  namePrefix = 'user$'
+  namePrefix = 'user$',
+ appPath = __dirname.replace(/backend/,'')
+ appPath = appPath.replace(/src/,'')
+
 
 //捕获node进程异常
 process.on('uncaughtException', function (err) {
@@ -21,9 +24,9 @@ redisClient.on("error", function (err) {
 
 //express配置
 app.use(cookie())
-app.use('/static', express.static(__dirname + '/dist/static'))
+app.use('/static', express.static(appPath + '/dist/static'))
 app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/dist/index.html');
+  res.sendFile(appPath + '/dist/index.html');
 });
 
 //socket连接，注册事件
@@ -247,7 +250,7 @@ function onSendMsg(message) {
   }).bind(this))
 }
 
-http.listen(8080, function () {
+http.listen(80, function () {
   console.log('listening on *:80');
 });
 
