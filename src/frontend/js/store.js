@@ -27,7 +27,7 @@ const store = new Vuex.Store({
     users: [],//用户列表
     me: null, // 我的id（登录人id）
     sessions: [],// 会话列表
-    currentSession: '',//当前聊天窗口id
+    currentSession:null,//当前聊天窗口id
     filterKey: '' //搜索用户的所搜词
   },
   getters: {
@@ -46,40 +46,13 @@ const store = new Vuex.Store({
     },
     //设置当前会话
     setCurrentSession (state, session) {
+      if (!session.messages) session.messages = []
       var exitSession = findSession(session.loginName)
       if (exitSession) {
         state.currentSession = exitSession
       } else {
-        state.currentSession = session
+        state.currentSession = session //sessions包含currentSession的引用
         state.sessions.push(session)
-      }
-    },
-    //添加消息到当前窗口或者sessions
-    addMsg(state, message){
-      var exitSession,
-        sessions = state.sessions,
-        currentSession = state.currentSession
-
-      //更新当前会话的消息
-      if (currentSession.loginName === message.from) {
-        //当前聊天窗口的聊天对象是消息发送者
-        currentSession.messages.push(message)
-      }
-
-      //更新历史会话的消息
-      if (exitSession = findSession(message.from)) {
-        //聊天记录里面有from的session
-        //from的session加入消息
-        exitSession.messages.push(message)
-      } else {
-        exitSession = {
-          loginName: message.from,
-          messages: [message],
-          img: message.img
-        }
-        //插入新建from的session
-        sessions.push(exitSession)
-        state.currentSession = exitSession
       }
     },
     //初始化用户列表
@@ -99,7 +72,7 @@ const store = new Vuex.Store({
       state.users.push(user)
     },
     setFilterKey: (state, value) => state.filterKey = value,
-    logout:(state)=> state.me = null
+    logout: (state) => state.me = null
   },
   actions: {
     register({state}, payload){
@@ -110,25 +83,26 @@ const store = new Vuex.Store({
       connect(state)
       state.client.login(payload)
     },
-    sendMsg ({currentSession, myLoginName, client}, content) {
+    sendMsg ({state}, content) {
       var message = {
-        from: myLoginName,
-        to: currentSession.loginName,
-        content: content,
+        from: state.me.loginName,
+        to: state.currentSession.loginName,
+        content,
         self: true,
         date: new Date()
       }
-      currentSession.messages.push(message)//往当前窗口写消息
 
-      var exitSession = findSession(message.to)
-      exitSession.messages.push(message)
-      client.sendMsg(
-        {
-          'from': myLoginName,
-          'to': currentSession.loginName,
-          content
-        }
-      )
+      var session = {}
+      copyProperties(session, state.currentSession)
+      session.messages.push(message)
+      state.currentSession = session
+      //往当前窗口写消息
+
+      state.client.sendMsg({
+        'from': state.me.loginName,
+        'to': state.currentSession.loginName,
+        content
+      })
     }
   }
 });

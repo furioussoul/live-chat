@@ -2,7 +2,7 @@
   import {mapGetters} from 'vuex'
   export default {
     computed: {
-      ...mapGetters(['me', 'currentSession','users'])
+      ...mapGetters(['me', 'currentSession'])
     },
     filters: {
       // 将日期过滤为 hour:minutes

@@ -1,7 +1,9 @@
 import store from './store'
 import {
   findSession,
-  cache
+  findUser,
+  cache,
+  copyProperties
 } from './util'
 
 //注册事件
@@ -63,14 +65,22 @@ function callBack({code, rMsg, rData}) {
 
 function onReceiveMsg(message) {
   let exitSession,
-    sessions = store.state.sessions
+    sessions = store.state.sessions,
+    currentSession = store.state.currentSession
+
+  if(currentSession && currentSession.loginName === message.from){
+    let session = {}
+    copyProperties(session, currentSession)
+    session.messages.push(message)
+    return store.state.currentSession = session
+  }
 
   //聊天记录里面没有from的session
   if (!(exitSession = findSession(message.from))) {
     //新建from的session
     exitSession = {
       loginName: message.from,
-      img: message.img,
+      img: findUser(message.from).img,
       messages: [message]
     }
     sessions.push(exitSession)
