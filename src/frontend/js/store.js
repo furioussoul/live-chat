@@ -16,7 +16,7 @@ import {
 Vue.use(Vuex);
 
 function connect(state) {
-  state.client = new ChatClient({host: '127.0.0.1', port: 80})
+  state.client = new ChatClient({host: '47.94.2.0', port: 80})
   if (!state.client.connect()) {
     alert('连接失败')
   }
