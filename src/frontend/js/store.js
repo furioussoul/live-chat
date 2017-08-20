@@ -4,6 +4,7 @@
  */
 import Vue from 'vue';
 import Vuex from 'vuex';
+import animate from './animate';
 import {
   ChatClient
 } from './client'
@@ -29,7 +30,8 @@ const store = new Vuex.Store({
     me: null, // 我的id（登录人id）
     sessions: [],// 会话列表
     currentSession: null,//当前聊天窗口id
-    filterKey: '' //搜索用户的所搜词
+    filterKey: '', //搜索用户的所搜词
+    barrageContainer: null
   },
   getters: {
     client: ({client}) => client,
@@ -43,7 +45,7 @@ const store = new Vuex.Store({
   mutations: {
     //初始化会话记录
     initSessions(state, sessions){
-      var userMapNotRead = {},
+      let userMapNotRead = {},
         users = state.users
       //计算有多少条未读，和登录用户匹配
       sessions.forEach(session => {
@@ -58,8 +60,8 @@ const store = new Vuex.Store({
       })
 
       users.forEach(user => {
-        var count = userMapNotRead[user.loginName]//未读数量
-        var index = users.indexOf(user)//在线用户的下标
+        let count = userMapNotRead[user.loginName]//未读数量
+        let index = users.indexOf(user)//在线用户的下标
         user.notReadMsgCount = count
         users.splice(index, 1, user)
       })
@@ -69,7 +71,7 @@ const store = new Vuex.Store({
     //设置当前会话
     setCurrentSession (state, session) {
       if (!session.messages) session.messages = []
-      var exitSession = findSession(session.loginName)
+      let exitSession = findSession(session.loginName)
       if (exitSession) {
         state.currentSession = exitSession
       } else {
@@ -84,9 +86,9 @@ const store = new Vuex.Store({
         state.client.read(exitSession.messages[0])
       }
 
-      var find = findUser(session.loginName);
+      let find = findUser(session.loginName);
       if (find) {
-        var index = state.users.indexOf(find)
+        let index = state.users.indexOf(find)
         find.notReadMsgCount = 0
         state.users.splice(index, 1, find)
       }
@@ -98,7 +100,7 @@ const store = new Vuex.Store({
     },
     //更新用户列表中用户的信息
     refreshUser(state, user){
-      var oldUser
+      let oldUser
       if ((oldUser = findUser(user.loginName))) {
         //用户已经在用户列表,更新用户信息
         copyProperties(oldUser, user)
@@ -108,7 +110,28 @@ const store = new Vuex.Store({
       state.users.push(user)
     },
     setFilterKey: (state, value) => state.filterKey = value,
-    logout: (state) => state.me = null
+    logout: (state) => state.me = null,
+    appendBarrage: (state, message) => {
+      let speed = 3,
+        className,
+        barrage = document.createElement("div"),
+        max = 1,//
+        min = 0
+
+      barrage.classList.add("barrage");
+
+      barrage.innerHTML = message.content
+      className = message.from === state.me.loginName
+        ? 'myBarrage'
+        : 'otherBarrage'
+      barrage.classList.add(className);
+      barrage.style.left = (state.barrageContainer.offsetWidth) + "px";
+      state.barrageContainer.appendChild(barrage);
+      barrage.style.top = (Math.random() * (max - min) + min) * (state.barrageContainer.offsetHeight - barrage.offsetHeight) + "px";
+      animate(barrage, "left", state.barrageContainer.offsetWidth + barrage.offsetWidth, speed, function () {
+        barrage.parentNode.removeChild(barrage);
+      })
+    }
   },
   actions: {
     register({state}, payload){
@@ -120,7 +143,7 @@ const store = new Vuex.Store({
       state.client.login(payload)
     },
     sendMsg ({state}, content) {
-      var msgId = guid(),
+      let msgId = guid(),
         message = {
           id: msgId,
           from: state.me.loginName,
@@ -131,7 +154,7 @@ const store = new Vuex.Store({
           date: new Date()
         }
 
-      var session = {}
+      let session = {}
       copyProperties(session, state.currentSession)
       session.messages.push(message)
       state.currentSession = session
@@ -141,6 +164,12 @@ const store = new Vuex.Store({
         id: msgId,
         'from': state.me.loginName,
         'to': state.currentSession.loginName,
+        content
+      })
+    },
+    sendBarrage({state}, content){
+      state.client.sendBarrage({
+        'from': state.me.loginName,
         content
       })
     }

@@ -15,6 +15,7 @@ function registerEvent() {
   this.socket.on('notifyUserLogin', onNotifyUserLogin)
   this.socket.on('kickOff', onKickOff)
   this.socket.on('receiveRead', onReceiveRead)
+  this.socket.on('receiveBarrage', onReceiveBarrage)
 }
 //注册回调事件（监听服务端推送事件）
 ChatClient.prototype.on = function (event, callback) {
@@ -44,15 +45,15 @@ export function ChatClient({host, port}) {
   this.register = function (param) {
     this.socket.emit("register", param);
   }
-
   this.login = function (param) {
     this.socket.emit("login", param);
   }
-
   this.sendMsg = function (param) {
     this.socket.emit('sendMsg', param);
   }
-
+  this.sendBarrage = function (param) {
+    this.socket.emit('sendBarrage', param);
+  }
   this.read = function (param) {
     this.socket.emit('read', param)
   }
@@ -66,6 +67,10 @@ function callBack({code, rMsg, rData}) {
   } else {
     alert(rMsg)
   }
+}
+
+function onReceiveBarrage(message) {
+  store.commit('appendBarrage', message)
 }
 
 function onReceiveRead(message) {

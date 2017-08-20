@@ -39,8 +39,14 @@ function onConnect(socket) {
   socket.on('register', onRegister.bind(socket))
   socket.on('login', onLogin.bind(socket))
   socket.on('sendMsg', onSendMsg.bind(socket))
+  socket.on('sendBarrage', onSendBarrage.bind(socket))
   socket.on('read', onRead.bind(socket))
   socket.on('disconnect', onDisconnected.bind(socket))
+}
+
+//广播弹幕
+function onSendBarrage(message) {
+  io.emit('receiveBarrage',message)
 }
 
 function onRead(message) {
