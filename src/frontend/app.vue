@@ -5,20 +5,16 @@
   import Message from './components/message';
   import loginPanel from './components/loginPanel.vue';
   import userListPanel from './components/userListPanel.vue';
+  import danmu from './components/danmu.vue';
   import store from './js/store'
   import {
     mapGetters,
     mapActions
   } from 'vuex'
   export default {
-    components: {Card, List, TextBox, Message, loginPanel, userListPanel},
+    components: {Card, List, TextBox, Message, loginPanel, userListPanel, danmu},
     computed: {
       ...mapGetters(['me'])
-    },
-    mounted(){
-      window.onunload = function() {
-        store.state.client.socket.disconnect()
-      }
     }
   }
 </script>
@@ -36,6 +32,7 @@
     <div class="userListPanel">
       <userListPanel></userListPanel>
     </div>
+    <danmu></danmu>
   </div>
   <div class="view" v-else>
     <loginPanel></loginPanel>
@@ -45,14 +42,14 @@
 <style lang="less" scoped>
   .view {
     margin: 0 auto;
-    width: 100%;
     height: 100%;
 
     overflow: hidden;
+    position: relative;
     border-radius: 3px;
 
     .sidebar, .main {
-      height: 100%;
+      height: 90%;
     }
     .sidebar {
       float: left;
@@ -87,11 +84,12 @@
   }
 
   @media screen and (min-width: 1200px) {
-    .view{
+    .view {
       width: 900px;
       height: 100%;
     }
-    .loginPanel{
+
+    .loginPanel {
       width: 900px;
       height: 100%;
       margin: 0 auto;
