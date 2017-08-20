@@ -82,8 +82,12 @@ const store = new Vuex.Store({
 
       exitSession.notRead = 0
 
-      if (exitSession.messages[0]) {
-        state.client.read(exitSession.messages[0])
+      for(var j = 0; j < exitSession.messages.length;j++){
+        if(!exitSession.messages[j].read && state.me.loginName === exitSession.messages[j].to){
+          //当前窗口中有发送给自己的消息，就算阅读了
+          state.client.read(exitSession.messages[j])
+          break
+        }
       }
 
       let find = findUser(session.loginName);
